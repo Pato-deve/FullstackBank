@@ -39,7 +39,7 @@ class Prestamo(models.Model):
     def __str__(self):
         return f"Préstamo de {self.monto_prestado} con un interes de {self.interes}%"
 
-class Pago(models.Model):
+class Servicios(models.Model):
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='pagos')
     servicio = models.CharField(max_length=30)
     monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from .models import Cuenta, Tarjeta, Transferencia, Prestamo,Pago
+from .models import Cuenta, Tarjeta, Transferencia, Prestamo,Servicios
 
 class CuentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cuenta
-        fields = ['id', 'usuario', 'tipo_cuenta', 'balance_pesos', 'balance_dolares']
+        fields = ['id', 'tipo_cuenta', 'balance_pesos', 'balance_dolares']
+        read_only_fields = ['id']
 
 class TarjetaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,7 +22,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         model = Prestamo
         fields = ['id', 'cuenta', 'monto_prestado', 'interes', 'pago_total', 'cuota_mensual']
 
-class PagoSerializer(serializers.ModelSerializer):
+class ServiciosSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Pago
+        model = Servicios
         fields = ['id', 'cuenta', 'servicio', 'monto', 'estado', 'fecha_pago']
