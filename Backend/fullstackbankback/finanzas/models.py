@@ -22,12 +22,14 @@ class Tarjeta(models.Model):
 
 
 class Transferencia(models.Model):
-    cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='transferencias')
+    cuenta_origen = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='transferencias_realizadas')
+    cuenta_destino = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='transferencias_recibidas')
     monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    descripcion = models.TextField()
+    descripcion = models.TextField(blank=True, null=True)
+    fecha = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f"Transferencia de {self.monto} - {self.descripcion}"
+        return f"Transferencia de {self.cuenta_origen} a {self.cuenta_destino} - {self.monto}"
 
 class Prestamo(models.Model):
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='prestamos')

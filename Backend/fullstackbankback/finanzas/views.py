@@ -26,8 +26,18 @@ class TarjetaViewSet(viewsets.ModelViewSet):
     serializer_class = TarjetaSerializer
 
 class TransferenciaViewSet(viewsets.ModelViewSet):
-    queryset = Transferencia.objects.all()
     serializer_class = TransferenciaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        usuario = self.request.user
+        return Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')
+
+    def perform_create(self, serializer):
+        cuenta_origen = serializer.validated_data['cuenta_origen']
+        if cuenta_origen.usuario != self.request.user:
+            raise serializer.ValidationError('No tienes permiso para usar esta cuenta como origen.')
+        serializer.save()
 
 class PrestamoViewSet(viewsets.ModelViewSet):
     queryset = Prestamo.objects.all()

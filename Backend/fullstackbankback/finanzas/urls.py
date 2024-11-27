@@ -5,7 +5,7 @@ from .views import CuentaViewSet, TarjetaViewSet, TransferenciaViewSet, Prestamo
 router = DefaultRouter()
 router.register(r'cuentas', CuentaViewSet, basename='cuentas')
 router.register(r'tarjetas', TarjetaViewSet)
-router.register(r'transferencias', TransferenciaViewSet)
+router.register(r'transferencias', TransferenciaViewSet, basename='transferencias')
 router.register(r'prestamos', PrestamoViewSet)
 router.register(r'pagos', PagoViewSet)
 

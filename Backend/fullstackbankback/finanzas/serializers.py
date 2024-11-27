@@ -15,7 +15,34 @@ class TarjetaSerializer(serializers.ModelSerializer):
 class TransferenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transferencia
-        fields = ['id', 'cuenta', 'monto', 'descripcion']
+        fields = ['id', 'cuenta_origen','cuenta_destino', 'monto', 'descripcion','fecha']
+        read_only_fields = ['id','fecha']
+
+    def validate(self, data):
+        if data['monto'] <= 0:
+            raise serializers.ValidationError('El monto debe ser mayor a 0')
+
+        cuenta_origen = data['cuenta_origen']
+        if cuenta_origen.balance_pesos < data['monto']:
+            raise serializers.ValidationError('Saldo insuficiente')
+
+        if data['cuenta_origen'] == data['cuenta_destino']:
+            raise serializers.ValidationError('La cuenta origen y la cuenta destino no pueden ser la misma.')
+
+        return data
+
+    def create(self, validated_data):
+        cuenta_origen = validated_data['cuenta_origen']
+        cuenta_destino = validated_data['cuenta_destino']
+        monto = validated_data['monto']
+
+        cuenta_origen.balance_pesos -= monto
+        cuenta_origen.save()
+
+        cuenta_destino.balance_pesos += monto
+        cuenta_destino.save()
+
+        return super().create(validated_data)
 
 class PrestamoSerializer(serializers.ModelSerializer):
     class Meta:
