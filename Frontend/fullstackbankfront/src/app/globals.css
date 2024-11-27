@@ -2,20 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Estilos base del body */
+@layer base {
+  body {
+    background-color: var(--background); /* Usar variable para el fondo */
+    color: var(--foreground); /* Usar variable para el texto */
+    font-family: "Roboto Mono", monospace, sans-serif;
+    height: 100%;
+    min-height: 100vh; /* Asegurarse que el body ocupe toda la pantalla */
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    font-size: 16px;
+
+    @screen sm {
+      font-size: 20px;
+    }
+
+    @screen md {
+      font-size: 14px;
+    }
+
+    @screen lg {
+      font-size: 16px;
+    }
+
+    @screen xl {
+      font-size: 18px;
+    }
+
+    @screen 2xl {
+      font-size: 20px;
+    }
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utilidades personalizadas */
+@layer utilities {
+  .border-t-light {
+    border-top: 1px solid lighten(#000000, 80%);
+  }
+
+  .transition-delay-close {
+    transition: visibility 1ms ease-out 200ms, max-width 200ms ease-out 0ms;
+  }
+
+  .fade {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  }
+
+  .fade-out {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  .input-default {
+    min-height: 1rem;
+    height: min-content;
+    border-radius: 0.375rem;
+    background-color: #d9e1e3;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid #e4e4e7;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px white, 0 0 0 4px black;
+    }
+  }
+
+  .button-default {
+    margin-top: 1rem;
+    height: 2.5rem;
+    background-color: #d9e1e3;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
 }
