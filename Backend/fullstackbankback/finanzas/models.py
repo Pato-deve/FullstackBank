@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.conf import settings
 
@@ -37,6 +39,8 @@ class Prestamo(models.Model):
     interes = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     pago_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cuota_mensual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fecha_inicio = models.DateField(default=datetime.date.today)
+    meses_duracion = models.PositiveBigIntegerField()
 
     def __str__(self):
         return f"Préstamo de {self.monto_prestado} con un interes de {self.interes}%"
