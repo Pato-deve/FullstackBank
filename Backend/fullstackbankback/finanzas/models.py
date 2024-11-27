@@ -1,4 +1,5 @@
 import datetime
+from random import random, randint
 
 from django.db import models
 from django.conf import settings
@@ -14,10 +15,26 @@ class Cuenta(models.Model):
 
 class Tarjeta(models.Model):
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='tarjetas')
-    numero_tarjeta = models.CharField(max_length=16)
-    tipo_tarjeta = models.CharField(max_length=30)
-    cvv = models.CharField(max_length=3)
-    expiracion = models.DateField()
+    numero_tarjeta = models.CharField(max_length=16, unique=True)
+    tipo_tarjeta = models.CharField(max_length=20,choices=[('debito','Débito'),('credito','Crédito')])
+    cvv = models.CharField(max_length=3,editable=False)
+    expiracion = models.DateField(editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.numero_tarjeta:
+            self.numero_tarjeta = self.generar_numero_tarjeta()
+        if not self.cvv:
+            self.cvv = str(randint(100,999))
+        if not self.expiracion:
+            self.expiracion = datetime.date.today() + datetime.timedelta(days = 3*365)
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generar_numero_tarjeta():
+        while True:
+            numero = ''.join([str(randint(0,9)) for n in range(16)])
+            if not Tarjeta.objects.filter(numero_tarjeta=numero).exists():
+                return numero
 
     def __str__(self):
         return f"{self.numero_tarjeta} - {self.tipo_tarjeta}"

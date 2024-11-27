@@ -1,3 +1,4 @@
+import datetime
 from django.db import transaction
 from rest_framework import serializers
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo,Servicios
@@ -12,6 +13,12 @@ class TarjetaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tarjeta
         fields = ['id', 'cuenta', 'numero_tarjeta', 'tipo_tarjeta', 'cvv', 'expiracion']
+        read_only_fields = ['id','numero_tarjeta', 'cvv','expiracion']
+
+    def validate(self,data):
+        if 'numero_tarjeta' in data and Tarjeta.objects.filter(numero_tarjeta=data['numero_tarjeta']).exists():
+            raise serializers.ValidationError("El número de tarjeta ya existe en el sistema.")
+        return data
 
 class TransferenciaSerializer(serializers.ModelSerializer):
     class Meta:

@@ -28,8 +28,18 @@ class CuentaViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 class TarjetaViewSet(viewsets.ModelViewSet):
-    queryset = Tarjeta.objects.all()
     serializer_class = TarjetaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        usuario = self.request.user
+        return Tarjeta.objects.filter(cuenta__usuario=usuario)
+
+    def perform_create(self, serializer):
+        cuenta = serializer.validated_data['cuenta']
+        if cuenta.usuario != self.request.user:
+            raise ValidationError("No puedes agregar una tarjeta a una cuenta que no sea del usuario")
+        serializer.save()
 
 class TransferenciaViewSet(viewsets.ModelViewSet):
     serializer_class = TransferenciaSerializer
