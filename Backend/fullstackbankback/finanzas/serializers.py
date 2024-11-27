@@ -48,8 +48,8 @@ class TransferenciaSerializer(serializers.ModelSerializer):
 class PrestamoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prestamo
-        fields = ['id', 'cuenta', 'monto_prestado', 'interes', 'pago_total', 'cuota_mensual','fecha_inicio','meses_duracion']
-        read_only_fields = ['id', 'pago_total', 'cuota_mensual', 'fecha_inicio']
+        fields = ['id', 'cuenta', 'monto_prestado', 'interes', 'pago_total', 'cuota_mensual','fecha_inicio','meses_duracion','estado']
+        read_only_fields = ['id', 'pago_total', 'cuota_mensual', 'fecha_inicio','estado']
 
         def validate(self, data):
             if data['monto_prestado'] <= 0:

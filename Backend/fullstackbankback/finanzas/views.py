@@ -1,3 +1,5 @@
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
@@ -40,8 +42,24 @@ class TransferenciaViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 class PrestamoViewSet(viewsets.ModelViewSet):
-    queryset = Prestamo.objects.all()
     serializer_class = PrestamoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        usuario = self.request.user
+        return Prestamo.objects.filter(cuenta__usuario=usuario)
+
+    @action(detail=False, methods=['get'])
+    def activos(self,request):
+        prestamos_activos = self.get_queryset().filter(estado='activo')
+        serializer = self.get_serializer(prestamos_activos, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def pagados(self,request):
+        prestamos_pagados = self.get_queryset().filter(estado='pagado')
+        serializer = self.get_serializer(prestamos_pagados, many=True)
+        return Response(serializer.data)
 
 class PagoViewSet(viewsets.ModelViewSet):
     queryset = Servicios.objects.all()

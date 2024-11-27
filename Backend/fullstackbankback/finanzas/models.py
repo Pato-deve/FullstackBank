@@ -41,9 +41,20 @@ class Prestamo(models.Model):
     cuota_mensual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     fecha_inicio = models.DateField(default=datetime.date.today)
     meses_duracion = models.PositiveBigIntegerField()
+    estado = models.CharField(
+        max_length=10,
+        choices=[('activo','Activo'),('pagado','Pagado')],
+        default='activo'
+    )
+
+    def actualizar_estado(self):
+        cuotas_restantes = self.pago_total - (self.cuota_mensual * self.meses_duracion)
+        if cuotas_restantes < 0:
+            self.estado = 'pagado'
+            self.save()
 
     def __str__(self):
-        return f"Préstamo de {self.monto_prestado} con un interes de {self.interes}%"
+        return f"Préstamo de {self.monto_prestado} - {self.estado}"
 
 class Servicios(models.Model):
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='pagos')
