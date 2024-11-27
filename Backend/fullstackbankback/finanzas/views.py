@@ -1,7 +1,11 @@
+from datetime import datetime, timedelta
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
+from rest_framework.views import APIView
+
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
 from .serializers import CuentaSerializer, TarjetaSerializer, TransferenciaSerializer, PrestamoSerializer, ServiciosSerializer
 
@@ -64,3 +68,61 @@ class PrestamoViewSet(viewsets.ModelViewSet):
 class PagoViewSet(viewsets.ModelViewSet):
     queryset = Servicios.objects.all()
     serializer_class = ServiciosSerializer
+
+
+class ResumenFinancieroView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = self.request.user
+
+        #balance
+        cuentas = Cuenta.objects.filter(usuario=usuario)
+        balance_pesos = sum(cuenta.balance_pesos for cuenta in cuentas)
+        balance_dolares = sum(cuenta.balance_dolares for cuenta in cuentas)
+
+        #prestamos activos
+        prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='activo')
+        total_pendiente = sum(prestamo.pago_total for prestamo in prestamos_activos)
+        proxima_cuota = sum(prestamo.cuota_mensual for prestamo in prestamos_activos)
+
+        #ultimas transferencias
+        transferencias = Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')[:5]
+        transferencias_data = [
+            {
+                "cuenta_origen": transferencia.cuenta_origen.id,
+                "cuenta_destino": transferencia.cuenta_destino.id,
+                "monto": transferencia.monto,
+                "fecha": transferencia.fecha,
+                "descripcion": transferencia.descripcion,
+            }
+            for transferencia in transferencias
+        ]
+
+        #pagos realizados en el mes
+        ultimo_mes = datetime.now() - timedelta(days=30)
+        pagos = Servicios.objects.filter(cuenta__usuario=usuario, fecha_pago__gte=ultimo_mes)
+        pagos_data = [
+            {
+                "servicio": pago.servicio,
+                "monto": pago.monto,
+                "estado": pago.estado,
+                "fecha_pago":pago.fecha_pago,
+            }
+            for pago in pagos
+        ]
+
+        resumen = {
+            "balances_totales":{
+                "pesos":balance_pesos,
+                "dolares":balance_dolares,
+            },
+            "prestamos":{
+                "total_pendiente":total_pendiente,
+                "proxima_cuota":proxima_cuota,
+                "cantidad_activos":prestamos_activos.count(),
+            },
+            "transferencias_recientes":transferencias_data,
+            "pagos_recientes":pagos_data,
+        }
+        return Response(resumen)
