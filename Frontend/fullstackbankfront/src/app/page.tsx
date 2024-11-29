@@ -1,6 +1,7 @@
-'use client';  // Add this directive at the top of the file
+'use client';
 
 import React, { useState } from 'react';
+import Cookies from 'js-cookie'
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -10,12 +11,12 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch('http://localhost:8000/api/usuarios/login/', {
+    const res = await fetch('http://127.0.0.1:8000/api/usuarios/login/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         username: username,
         password: password,
       }),
@@ -23,11 +24,22 @@ const Login = () => {
 
     const data = await res.json();
 
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error('Login failed:', errorData);
+      setError(errorData.error || 'Something went wrong');
+    return;
+}
     if (res.ok) {
-      // Handle success (e.g., redirect to home page)
-      window.location.href = '/homebanking'; // Or use Next.js router: useRouter().push('/home')
+      localStorage.setItem('authToken', data.access);
+      Cookies.set('authToken', data.access, {
+        path: '/',
+        sameSite: 'None',
+        secure: true,
+      });
+
+      window.location.href = '/homebanking';
     } else {
-      // Handle error
       setError(data.error || 'Something went wrong');
     }
   };

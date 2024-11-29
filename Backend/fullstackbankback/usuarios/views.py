@@ -8,7 +8,6 @@ from django.contrib.auth import authenticate
 from usuarios.serializers import RegistroSerializer, DetalleUsuarioSerializer
 
 
-# Login View - Returns JWT tokens upon successful login
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -17,20 +16,18 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
             refresh = RefreshToken.for_user(user)
             return Response({
-                'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'refresh': str(refresh),
             }, status=status.HTTP_200_OK)
         else:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# User Registration View
 class RegistroUsuarioView(APIView):
-    permission_classes = [AllowAny]  # Allow everyone to register
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = RegistroSerializer(data=request.data)
@@ -43,7 +40,6 @@ class RegistroUsuarioView(APIView):
         return Response({'mensaje': 'Solo para usuarios autenticados'})
 
 
-# User Details View - Requires authentication
 class DetalleUsuarioView(APIView):
     permission_classes = [IsAuthenticated]
 
