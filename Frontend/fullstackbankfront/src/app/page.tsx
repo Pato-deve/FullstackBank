@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import ConceptArtLogin from "@/app/Background";
 import Cookies from 'js-cookie';
 
 const Login = () => {
@@ -82,11 +83,7 @@ const Login = () => {
     <div className="flex h-screen">
       {/* Left side: Illustration */}
       <div className="hidden md:flex w-3/4 bg-gray-100 items-center justify-center">
-        <img
-          src="/online_banking_illustration.png" // Ruta de la imagen
-          alt="Online Banking Illustration"
-          className="max-w-full h-auto"
-        />
+        <ConceptArtLogin></ConceptArtLogin>
       </div>
 
       {/* Right side: Form */}
