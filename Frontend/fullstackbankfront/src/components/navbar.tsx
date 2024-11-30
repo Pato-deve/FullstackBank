@@ -11,9 +11,13 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-blue-600 text-white px-4 py-2 shadow-md">
+    <nav className="bg-gray-900 text-white px-4 py-2">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-xl font-bold">FullstackBank</h1>
+        <h1 className="text-xl font-bold">
+          <Link href="/homebanking" className="hover:text-blue-400">
+            FullstackBank
+          </Link>
+        </h1>
 
         {/* Hamburger Menu Icon */}
         <button
@@ -28,27 +32,27 @@ const Navbar: React.FC = () => {
         {/* Menu for large screens */}
         <ul className="hidden lg:flex space-x-4">
           <li>
-            <Link href="/homebanking/cuentas" className="hover:text-blue-300">
+            <Link href="/homebanking/cuentas" className="hover:text-blue-400">
               Cuentas
             </Link>
           </li>
           <li>
-            <Link href="/homebanking/tarjetas" className="hover:text-blue-300">
+            <Link href="/homebanking/tarjetas" className="hover:text-blue-400">
               Tarjetas
             </Link>
           </li>
           <li>
-            <Link href="/homebanking/prestamos" className="hover:text-blue-300">
+            <Link href="/homebanking/prestamos" className="hover:text-blue-400">
               Préstamos
             </Link>
           </li>
           <li>
-            <Link href="/homebanking/pagos" className="hover:text-blue-300">
+            <Link href="/homebanking/pagos" className="hover:text-blue-400">
               Pagos
             </Link>
           </li>
           <li>
-            <Link href="/homebanking/transferencias" className="hover:text-blue-300">
+            <Link href="/homebanking/transferencias" className="hover:text-blue-400">
               Transferencias
             </Link>
           </li>
@@ -56,14 +60,14 @@ const Navbar: React.FC = () => {
 
         {/* Dropdown menu for small screens */}
         <div
-          className={`lg:hidden absolute top-16 left-0 w-full bg-blue-600 ${
+          className={`lg:hidden absolute top-16 left-0 w-full bg-blue-800 ${
             isOpen ? "block" : "hidden"
           }`}
         >
           <ul className="space-y-4 py-4">
             <li>
               <Link href="/homebanking" className="block text-white px-4 py-2 hover:bg-blue-700">
-                homebanking
+                HomeBanking
               </Link>
             </li>
             <li>
@@ -87,7 +91,7 @@ const Navbar: React.FC = () => {
               </Link>
             </li>
             <li>
-              <Link href="/transferencias" className="block text-white px-4 py-2 hover:bg-blue-700">
+              <Link href="/homebanking/transferencias" className="block text-white px-4 py-2 hover:bg-blue-700">
                 Transferencias
               </Link>
             </li>
