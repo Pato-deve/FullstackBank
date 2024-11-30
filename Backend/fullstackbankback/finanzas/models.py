@@ -14,25 +14,41 @@ class Cuenta(models.Model):
         return f"{self.tipo_cuenta} - {self.usuario.username}"
 
 class Tarjeta(models.Model):
+    TIPO_TARJETA_CHOICES = [
+        ('debito', 'Débito'),
+        ('credito', 'Crédito'),
+    ]
+
+    PROVEEDOR_CHOICES = [
+        ('visa', 'Visa'),
+        ('mastercard', 'MasterCard'),
+    ]
+
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='tarjetas')
     numero_tarjeta = models.CharField(max_length=16, unique=True)
-    tipo_tarjeta = models.CharField(max_length=20,choices=[('debito','Débito'),('credito','Crédito')])
-    cvv = models.CharField(max_length=3,editable=False)
+    tipo_tarjeta = models.CharField(max_length=20, choices=TIPO_TARJETA_CHOICES)
+    cvv = models.CharField(max_length=3, editable=False)
     expiracion = models.DateField(editable=False)
+    proveedor = models.CharField(
+        max_length=50, 
+        choices=PROVEEDOR_CHOICES, 
+        null=True, 
+        blank=True
+    )
 
     def save(self, *args, **kwargs):
         if not self.numero_tarjeta:
             self.numero_tarjeta = self.generar_numero_tarjeta()
         if not self.cvv:
-            self.cvv = str(randint(100,999))
+            self.cvv = str(randint(100, 999))
         if not self.expiracion:
-            self.expiracion = datetime.date.today() + datetime.timedelta(days = 3*365)
+            self.expiracion = datetime.date.today() + datetime.timedelta(days=3 * 365)
         super().save(*args, **kwargs)
 
     @staticmethod
     def generar_numero_tarjeta():
         while True:
-            numero = ''.join([str(randint(0,9)) for n in range(16)])
+            numero = ''.join([str(randint(0, 9)) for _ in range(16)])
             if not Tarjeta.objects.filter(numero_tarjeta=numero).exists():
                 return numero
 

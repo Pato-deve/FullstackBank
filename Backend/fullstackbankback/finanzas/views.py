@@ -32,6 +32,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # Asegurarte de que solo las cuentas del usuario actual se muestren
         usuario = self.request.user
         return Tarjeta.objects.filter(cuenta__usuario=usuario)
 
@@ -40,6 +41,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         if cuenta.usuario != self.request.user:
             raise ValidationError("No puedes agregar una tarjeta a una cuenta que no sea del usuario")
         serializer.save()
+
 
 class TransferenciaViewSet(viewsets.ModelViewSet):
     serializer_class = TransferenciaSerializer
@@ -64,13 +66,13 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         return Prestamo.objects.filter(cuenta__usuario=usuario)
 
     @action(detail=False, methods=['get'])
-    def activos(self,request):
+    def activos(self, request):
         prestamos_activos = self.get_queryset().filter(estado='activo')
         serializer = self.get_serializer(prestamos_activos, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
-    def pagados(self,request):
+    def pagados(self, request):
         prestamos_pagados = self.get_queryset().filter(estado='pagado')
         serializer = self.get_serializer(prestamos_pagados, many=True)
         return Response(serializer.data)
@@ -79,24 +81,23 @@ class PagoViewSet(viewsets.ModelViewSet):
     queryset = Servicios.objects.all()
     serializer_class = ServiciosSerializer
 
-
 class ResumenFinancieroView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         usuario = self.request.user
 
-        #balance
+        # balance
         cuentas = Cuenta.objects.filter(usuario=usuario)
         balance_pesos = sum(cuenta.balance_pesos for cuenta in cuentas)
         balance_dolares = sum(cuenta.balance_dolares for cuenta in cuentas)
 
-        #prestamos activos
+        # prestamos activos
         prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='activo')
         total_pendiente = sum(prestamo.pago_total for prestamo in prestamos_activos)
         proxima_cuota = sum(prestamo.cuota_mensual for prestamo in prestamos_activos)
 
-        #ultimas transferencias
+        # últimas transferencias
         transferencias = Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')[:5]
         transferencias_data = [
             {
@@ -109,7 +110,7 @@ class ResumenFinancieroView(APIView):
             for transferencia in transferencias
         ]
 
-        #pagos realizados en el mes
+        # pagos realizados en el mes
         ultimo_mes = datetime.now() - timedelta(days=30)
         pagos = Servicios.objects.filter(cuenta__usuario=usuario, fecha_pago__gte=ultimo_mes)
         pagos_data = [
@@ -117,22 +118,22 @@ class ResumenFinancieroView(APIView):
                 "servicio": pago.servicio,
                 "monto": pago.monto,
                 "estado": pago.estado,
-                "fecha_pago":pago.fecha_pago,
+                "fecha_pago": pago.fecha_pago,
             }
             for pago in pagos
         ]
 
         resumen = {
-            "balances_totales":{
-                "pesos":balance_pesos,
-                "dolares":balance_dolares,
+            "balances_totales": {
+                "pesos": balance_pesos,
+                "dolares": balance_dolares,
             },
-            "prestamos":{
-                "total_pendiente":total_pendiente,
-                "proxima_cuota":proxima_cuota,
-                "cantidad_activos":prestamos_activos.count(),
+            "prestamos": {
+                "total_pendiente": total_pendiente,
+                "proxima_cuota": proxima_cuota,
+                "cantidad_activos": prestamos_activos.count(),
             },
-            "transferencias_recientes":transferencias_data,
-            "pagos_recientes":pagos_data,
+            "transferencias_recientes": transferencias_data,
+            "pagos_recientes": pagos_data,
         }
         return Response(resumen)
