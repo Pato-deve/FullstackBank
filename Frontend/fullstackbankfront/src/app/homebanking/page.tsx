@@ -126,7 +126,7 @@ export default function HomeBanking() {
       .post(
         "http://localhost:8000/api/finanzas/tarjetas/",
         {
-          tipo_tarjeta: data.tipo_tarjeta, // Corrección: ahora es el tipo correcto
+          tipo_tarjeta: data.tipo_tarjeta,
           proveedor: data.proveedor,
           cuenta: data.cuenta,
         },
@@ -138,7 +138,6 @@ export default function HomeBanking() {
       )
       .then(() => {
         console.log("Tarjeta creada exitosamente.");
-        // Recargar la página después de crear la tarjeta
         window.location.reload();
       })
       .catch((error) => {
