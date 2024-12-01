@@ -15,7 +15,6 @@ const TarjetasPage: React.FC = () => {
 
   const token = Cookies.get("authToken");
 
-  // Obtener tarjetas del usuario
   const fetchTarjetas = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/finanzas/tarjetas/", {
@@ -37,13 +36,12 @@ const TarjetasPage: React.FC = () => {
         },
       });
       console.log("Tarjeta eliminada exitosamente.");
-      fetchTarjetas(); // Actualizar las tarjetas después de eliminar una
+      fetchTarjetas();
     } catch (error) {
       console.error("Error al eliminar la tarjeta:", error.response?.data || error.message);
     }
   };
 
-  // Manejar envío del formulario del modal
   const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -62,13 +60,12 @@ const TarjetasPage: React.FC = () => {
       );
       console.log("Tarjeta creada exitosamente.");
       setModalOpen(false);
-      fetchTarjetas(); // Actualizar las tarjetas después de crear una
+      fetchTarjetas();
     } catch (error) {
       console.error("Error al crear la tarjeta:", error.response?.data || error.message);
     }
   };
 
-  // Manejar cambios en el formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -83,7 +80,6 @@ const TarjetasPage: React.FC = () => {
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Mis Tarjetas</h1>
 
-        {/* Lista de tarjetas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tarjetas.map((tarjeta) => (
             <div
@@ -92,7 +88,6 @@ const TarjetasPage: React.FC = () => {
                 tarjeta.tipo_tarjeta === "credito" ? "bg-gradient-to-br from-gray-800 to-black" : "bg-white"
               }`}
             >
-              {/* Marca y Proveedor */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className={`text-lg font-semibold uppercase ${tarjeta.tipo_tarjeta === "credito" ? "text-white" : "text-black"}`}>
                   {tarjeta.tipo_tarjeta}
@@ -102,12 +97,10 @@ const TarjetasPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Número de Tarjeta */}
               <div className={`text-2xl font-mono tracking-wider ${tarjeta.tipo_tarjeta === "credito" ? "text-gray-200" : "text-gray-800"}`}>
                 {tarjeta.numero_tarjeta.replace(/(\d{4})(?=\d)/g, "$1 ")}
               </div>
 
-              {/* Detalles de Expiración y CVV */}
               <div className="flex justify-between mt-4 text-sm">
                 <div>
                   <p className={`uppercase ${tarjeta.tipo_tarjeta === "credito" ? "text-gray-400" : "text-gray-600"}`}>Expira</p>
@@ -121,7 +114,6 @@ const TarjetasPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Botón de eliminar reposicionado */}
               <div className="flex justify-end mt-4">
                 <button
                   onClick={() => handleDelete(tarjeta.id)}
@@ -138,7 +130,6 @@ const TarjetasPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Botón para abrir el modal */}
         <div className="text-center mt-8">
           <button
             className="relative px-8 py-3 bg-gradient-to-r from-gray-800 to-gray-600 text-white rounded-full shadow-lg hover:from-gray-700 hover:to-gray-500 transition-all duration-300"
@@ -149,7 +140,6 @@ const TarjetasPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal para crear una tarjeta */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
           <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg">

@@ -32,7 +32,6 @@ class TarjetaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Asegurarte de que solo las cuentas del usuario actual se muestren
         usuario = self.request.user
         return Tarjeta.objects.filter(cuenta__usuario=usuario)
 

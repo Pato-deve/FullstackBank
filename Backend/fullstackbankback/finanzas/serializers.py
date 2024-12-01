@@ -17,15 +17,12 @@ class TarjetaSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'numero_tarjeta', 'cvv', 'expiracion']
 
     def validate(self, data):
-        # Validar que el número de tarjeta sea único (si se proporciona manualmente)
         if 'numero_tarjeta' in data and Tarjeta.objects.filter(numero_tarjeta=data['numero_tarjeta']).exists():
             raise serializers.ValidationError("El número de tarjeta ya existe en el sistema.")
         
-        # Validar que el proveedor sea uno de los permitidos
         if 'proveedor' in data and data['proveedor'] not in dict(Tarjeta.PROVEEDOR_CHOICES):
             raise serializers.ValidationError("El proveedor debe ser 'Visa' o 'MasterCard'.")
         
-        # Validar que el tipo de tarjeta sea válido
         if 'tipo_tarjeta' in data and data['tipo_tarjeta'] not in dict(Tarjeta.TIPO_TARJETA_CHOICES):
             raise serializers.ValidationError("El tipo de tarjeta debe ser 'Débito' o 'Crédito'.")
 

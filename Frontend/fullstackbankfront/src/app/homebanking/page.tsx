@@ -40,7 +40,7 @@ function useResumenFinanciero() {
 }
 
 function ModalCrearTarjeta({ onClose, onSubmit, cuentas }) {
-  const [proveedor, setProveedor] = useState("visa"); // Actualización: nombre claro
+  const [proveedor, setProveedor] = useState("visa");
   const [tipoTarjeta, setTipoTarjeta] = useState("debito");
   const [cuentaId, setCuentaId] = useState(cuentas.length > 0 ? cuentas[0].id : "");
 
@@ -184,7 +184,7 @@ export default function HomeBanking() {
   ];
 
   const tarjetaExistente = tarjetas.length > 0;
-  const primeraTarjeta = tarjetaExistente ? tarjetas[0] : null; // Tomar solo la primera tarjeta
+  const primeraTarjeta = tarjetaExistente ? tarjetas[0] : null;
 
   return (
     <section className="bg-gray-200 min-h-screen py-20 px-6">
