@@ -85,7 +85,7 @@ const TarjetasPage: React.FC = () => {
             <div
               key={tarjeta.id}
               className={`p-6 rounded-lg shadow-lg relative ${
-                tarjeta.tipo_tarjeta === "credito" ? "bg-gradient-to-br from-gray-800 to-black" : "bg-white"
+                tarjeta.tipo_tarjeta === "credito" ? "bg-gradient-to-br from-gray-800 to-black" : "bg-gray-200"
               }`}
             >
               <div className="flex justify-between items-center mb-6">
