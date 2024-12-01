@@ -13,14 +13,13 @@ type Prestamo = {
 
 export default function Prestamos() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
-  const [usuario, setUsuario] = useState<string | null>(null); // Usuario logeado
+  const [usuario, setUsuario] = useState<string | null>(null);
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
-  const [monto, setMonto] = useState<string>(""); // Monto del préstamo
-  const [plazo, setPlazo] = useState<string>("12"); // Plazo en meses
-  const [tasaInteres, setTasaInteres] = useState<number>(10); // Tasa de interés anual
+  const [monto, setMonto] = useState<string>("");
+  const [plazo, setPlazo] = useState<string>("12");
+  const [tasaInteres, setTasaInteres] = useState<number>(10);
   const [error, setError] = useState<string | null>(null);
 
-  // Obtener el usuario logeado y sus préstamos desde el backend
   useEffect(() => {
     const fetchUsuario = async () => {
       try {
@@ -39,7 +38,6 @@ export default function Prestamos() {
     fetchUsuario();
   }, []);
 
-  // Función para generar un préstamo
   const generarPrestamo = async () => {
     setError(null);
 
@@ -55,7 +53,6 @@ export default function Prestamos() {
       return;
     }
 
-    // Cálculo del préstamo
     const tasaMensual = tasaInteres / 100 / 12;
     const numeroCuotas = plazoNumber;
     const cuota =
