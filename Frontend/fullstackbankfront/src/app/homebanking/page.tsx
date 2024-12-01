@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "@/axiosConfig";
 import Cookies from "js-cookie";
-import Link from "next/link"; // Usamos Link para redirección
+import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMoneyBillWave, faMoneyBillTransfer, faFile } from "@fortawesome/free-solid-svg-icons";
 
-// Hook para obtener el resumen financiero
 function useResumenFinanciero() {
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +39,6 @@ function useResumenFinanciero() {
   return { resumen, loading, error };
 }
 
-// Modal para crear una tarjeta
 function ModalCrearTarjeta({ onClose, onSubmit, cuentas }) {
   const [proveedor, setProveedor] = useState("visa"); // Actualización: nombre claro
   const [tipoTarjeta, setTipoTarjeta] = useState("debito");
