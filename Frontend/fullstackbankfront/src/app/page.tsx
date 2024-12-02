@@ -47,7 +47,7 @@ const Login = () => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const res = await fetch('http://localhost:8000/api/usuarios/registro/', {
       method: 'POST',
       headers: {
@@ -61,23 +61,24 @@ const Login = () => {
         last_name: lastName,
       }),
     });
-
+  
     const data = await res.json();
-
+  
     if (res.ok) {
-      // Guardar el token en localStorage y en cookies
+      // Guardar los tokens en localStorage y cookies
       localStorage.setItem('authToken', data.access);
       Cookies.set('authToken', data.access, {
         path: '/',
         sameSite: 'None',
         secure: true,
       });
-
+  
       window.location.href = '/homebanking';
     } else {
       setError(data.detail || 'Algo salió mal durante el registro');
     }
   };
+  
 
   return (
     <div className="flex h-screen">
