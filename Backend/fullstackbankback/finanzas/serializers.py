@@ -2,12 +2,15 @@ import datetime
 from django.db import transaction
 from rest_framework import serializers
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo,Servicios
+from rest_framework import serializers
+from .models import Cuenta
 
 class CuentaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cuenta
-        fields = ['id', 'tipo_cuenta', 'balance_pesos', 'balance_dolares']
-        read_only_fields = ['id']
+        fields = ['id', 'numero_cuenta', 'tipo_cuenta', 'balance_pesos', 'balance_dolares']
+        read_only_fields = ['id', 'numero_cuenta']  # 'numero_cuenta' es de solo lectura, generado automáticamente
+
         
 
 class TarjetaSerializer(serializers.ModelSerializer):

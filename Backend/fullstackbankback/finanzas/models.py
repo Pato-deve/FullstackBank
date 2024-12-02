@@ -4,14 +4,36 @@ from random import random, randint
 from django.db import models
 from django.conf import settings
 
+import random
+import string
+from django.db import models
+from django.conf import settings
+
 class Cuenta(models.Model):
+    TIPO_CUENTA_CHOICES = [
+        ('ahorro', 'Ahorro'),
+        ('corriente', 'Corriente'),
+    ]
+    
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cuentas')
-    tipo_cuenta = models.CharField(max_length=30)
+    tipo_cuenta = models.CharField(max_length=30, choices=TIPO_CUENTA_CHOICES)
     balance_pesos = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     balance_dolares = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    numero_cuenta = models.CharField(max_length=10, unique=True, null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        if not self.numero_cuenta:
+            # Generar un número de cuenta único con el formato xxx-xxxxx
+            self.numero_cuenta = self.generar_numero_cuenta()
+        super().save(*args, **kwargs)
+
+    def generar_numero_cuenta(self):
+        # Genera un número aleatorio para la cuenta en el formato xxx-xxxxx
+        return f"{random.randint(100, 999)}-{random.randint(10000, 99999)}"
+    
     def __str__(self):
-        return f"{self.tipo_cuenta} - {self.usuario.username}"
+        return f"{self.tipo_cuenta} - {self.usuario.username} - {self.numero_cuenta}"
+
 
 class Tarjeta(models.Model):
     TIPO_TARJETA_CHOICES = [

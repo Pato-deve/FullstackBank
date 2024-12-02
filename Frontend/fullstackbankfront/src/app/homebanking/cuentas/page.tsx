@@ -1,4 +1,5 @@
-"use client";
+"use client"; 
+
 import { useState, useEffect } from "react";
 import axiosInstance from "@/axiosConfig";
 
@@ -7,11 +8,27 @@ export default function Cuentas() {
   const [resumenFinanciero, setResumenFinanciero] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   // Estado para la moneda seleccionada
   const [selectedCurrency, setSelectedCurrency] = useState<"pesos" | "dolares">("pesos");
+  const [showModal, setShowModal] = useState(false);
+  const [tipoCuenta, setTipoCuenta] = useState<"ahorro" | "corriente">("ahorro");
 
   useEffect(() => {
+    // Obtener las cuentas al cargar el componente
+    fetchCuentas();
+
+    axiosInstance
+    .get("/api/finanzas/resumen/")
+    .then((response) => {
+      setResumenFinanciero(response.data);
+    })
+    .catch(() => {
+      setError("Error al cargar el resumen financiero.");
+    });
+}, []);
+
+  const fetchCuentas = () => {
     axiosInstance
       .get("/api/finanzas/cuentas/")
       .then((response) => {
@@ -22,16 +39,21 @@ export default function Cuentas() {
         setError("Error al cargar las cuentas.");
         setLoading(false);
       });
+  };
 
+  const crearCuenta = () => {
     axiosInstance
-      .get("/api/finanzas/resumen/")
-      .then((response) => {
-        setResumenFinanciero(response.data);
+      .post("/api/finanzas/cuentas/", { tipo_cuenta: tipoCuenta })
+      .then(() => {
+        // Una vez creada la cuenta, recarga las cuentas
+        fetchCuentas();
+        setShowModal(false); // Cerrar el modal
       })
-      .catch(() => {
-        setError("Error al cargar el resumen financiero.");
+      .catch((err) => {
+        setError("Error al crear la cuenta.");
+        console.error(err);
       });
-  }, []);
+  };
 
   if (loading) {
     return <div className="text-center">Cargando cuentas...</div>;
@@ -48,12 +70,65 @@ export default function Cuentas() {
   return (
     <div className="px-4 py-8">
       <div className="mb-8">
-        {/* Contenedor para la cuenta */}
-        <div className="bg-gray-800 bg-opacity-5 p-6 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
-          <h1 className="text-2xl font-bold">Cuenta 123-45678/1</h1>
-          <p className="text-sm text-gray-700 mt-2">Resumen de tu cuenta</p>
-        </div>
+        {/* Botón de creación de cuenta */}
+        {!cuentas.length && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+            >
+              Crear cuenta
+            </button>
+          </div>
+        )}
+
+        {/* Mostrar la cuenta si existe */}
+        {cuentas.length > 0 && (
+          <div className="bg-gray-800 bg-opacity-5 p-6 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
+            <h1 className="text-2xl font-bold">Cuenta {cuentas[0].numero_cuenta}</h1>
+            <p className="text-sm text-gray-700 mt-2">Resumen de tu cuenta</p>
+          </div>
+        )}
       </div>
+
+      {/* Modal para seleccionar tipo de cuenta */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg max-w-sm">
+            <h3 className="text-lg font-semibold mb-4">Selecciona el tipo de cuenta</h3>
+            <button
+              onClick={() => setTipoCuenta("ahorro")}
+              className={`w-full py-2 rounded-lg mb-2 ${
+                tipoCuenta === "ahorro" ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              Ahorro
+            </button>
+            <button
+              onClick={() => setTipoCuenta("corriente")}
+              className={`w-full py-2 rounded-lg ${
+                tipoCuenta === "corriente" ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              Corriente
+            </button>
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={crearCuenta}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Botones para cambiar moneda */}
       <div className="flex justify-center gap-4 mt-4 mb-8">
