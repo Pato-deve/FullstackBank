@@ -2,45 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* Estilos base del body */
 @layer base {
+  html,
   body {
-    background-color: var(--background); /* Usar variable para el fondo */
-    color: var(--foreground); /* Usar variable para el texto */
+    margin: 0; /* Elimina márgenes globales */
+    padding: 0; /* Elimina cualquier padding global */
+    background-color: #e5e7eb; /* Color de fondo uniforme para toda la página */
+    color: var(--foreground); /* Color del texto */
     font-family: "Roboto Mono", monospace, sans-serif;
-    height: 100%;
-    min-height: 100vh; /* Asegurarse que el body ocupe toda la pantalla */
-    overflow-x: hidden;
+    min-height: 100vh; /* Asegura que ocupe toda la pantalla */
+    height: 100%; /* Para navegadores más antiguos */
     display: flex;
     flex-direction: column;
-    width: 100%;
-    font-size: 16px;
+    overflow-x: hidden; /* Evita scroll horizontal */
+    width: 100%; /* Asegura que ocupe todo el ancho */
+  }
 
-    @screen sm {
-      font-size: 20px;
-    }
+  #__next {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Asegura que el contenido ocupe la pantalla completa en Next.js */
+  }
+}
 
-    @screen md {
-      font-size: 14px;
-    }
+/* Estilos globales */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0; /* Reseteo para títulos */
+    padding: 0;
+  }
 
-    @screen lg {
-      font-size: 16px;
-    }
+  p {
+    margin: 0; /* Reseteo para párrafos */
+  }
 
-    @screen xl {
-      font-size: 18px;
-    }
-
-    @screen 2xl {
-      font-size: 20px;
-    }
+  a {
+    color: inherit;
+    text-decoration: none; /* Quita subrayado de los enlaces */
   }
 }
 
 /* Utilidades personalizadas */
 @layer utilities {
+  .content-wrapper {
+    flex-grow: 1; /* Permite que el contenido crezca y empuje el footer hacia abajo */
+    background-color: #e5e7eb; /* Fondo gris consistente para el contenido */
+  }
+
+  .footer {
+    background-color: #1f2937; /* Color de fondo del footer (oscuro) */
+    color: #ffffff; /* Color del texto en el footer */
+    padding: 1rem 0; /* Espaciado interno */
+    text-align: center; /* Centra el texto */
+  }
+
   .border-t-light {
     border-top: 1px solid lighten(#000000, 80%);
   }

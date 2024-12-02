@@ -1,32 +1,28 @@
-"use client"; // Añadir esta línea al inicio del archivo
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Este hook necesita el componente marcado como cliente
-import Cookies from 'js-cookie';
+import { usePathname } from "next/navigation";
+import Cookies from "js-cookie";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"; // Import FontAwesome
+import { faUser } from "@fortawesome/free-regular-svg-icons"; // Importar el icono faUser
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Menú móvil
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown usuario
+  const [isMobile, setIsMobile] = useState(false); // Estado para detectar si es móvil
+  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'bottom'>('bottom'); // Para ajustar la posición del dropdown
   const pathname = usePathname();
 
   const user = {
-    name: 'Juan Pérez',
-    email: 'juan@example.com',
-  };
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+    name: "Juan Pérez",
+    email: "juan@example.com",
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    Cookies.remove('authToken');
-    window.location.href = 'http://localhost:3000';
+    localStorage.removeItem("authToken");
+    Cookies.remove("authToken");
+    window.location.href = "/";
   };
 
   const navItems = [
@@ -38,51 +34,96 @@ const Navbar: React.FC = () => {
     { href: "/homebanking/transferencias", label: "Transferencias" },
   ];
 
+  // Cerrar el menú móvil al cambiar de página
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Detectar tamaño de pantalla para diferenciar entre móvil y escritorio
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobile(false); // Es escritorio
+        setDropdownPosition('left'); // Mostrar el dropdown a la izquierda en escritorio
+        setIsOpen(false); // Cerrar menú móvil en escritorio
+      } else {
+        setIsMobile(true); // Es móvil
+        setDropdownPosition('bottom'); // Mostrar el dropdown abajo en móvil
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Llamar una vez al cargar
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <nav className="bg-black text-gray-200 px-4 py-3 shadow-md border-b border-gray-700">
       <div className="w-full flex items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <img
-            src="logoRest.png"
-            alt="Logo Rest"
-            className="w-16 h-16 object-contain"
-          />
-          <h1 className="text-lg font-bold tracking-wide">
-            <Link href="/homebanking" className="hover:text-white transition-all duration-500">
-              Rest
+        {/* Logo o Usuario (según tamaño de pantalla) */}
+        <div className="flex items-center">
+          {/* Pantallas grandes: Logo Rest */}
+          <div className="hidden lg:flex items-center space-x-6">
+          <Link href="/homebanking">
+            <img
+              src="/logoRest.png"
+              alt="Logo Rest"
+              className="w-16 h-16 object-contain"
+            />
             </Link>
-          </h1>
+            <h1 className="text-lg font-bold tracking-wide">
+              <Link href="/homebanking">Rest</Link>
+            </h1>
+          </div>
+
+          {/* Pantallas pequeñas: Ícono Usuario */}
+          <div className="lg:hidden relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="text-xl hover:text-white"
+            >
+              <FontAwesomeIcon icon={faUser} className="w-8 h-8 text-gray-400" />
+            </button>
+            <div
+              className={`absolute ${dropdownPosition === 'bottom' ? 'top-full mt-2' : 'left-full ml-2'} w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50 ${
+                isDropdownOpen ? "block" : "hidden"
+              }`}
+            >
+              <div className="px-4 py-2 text-sm">
+                <p>{user.name}</p>
+                <p className="text-gray-400">{user.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
 
-        <ul className="hidden lg:flex space-x-6 text-sm">
+        {/* Menú Desktop */}
+        <ul className="hidden lg:flex space-x-6 text-sm items-center">
           {navItems.map((item) => (
-            <li key={item.href} className="relative group">
+            <li key={item.href}>
               <Link
                 href={item.href}
                 className={`${
-                  pathname === item.href
-                    ? "text-white"
-                    : "hover:text-white"
+                  pathname === item.href ? "text-white" : "hover:text-white"
                 } transition-all duration-300`}
               >
                 {item.label}
               </Link>
-              <span
-                className={`absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ${
-                  pathname === item.href ? "scale-x-100" : ""
-                }`}
-              ></span>
             </li>
           ))}
 
-          {/* Usuario con hover efecto */}
-          <li className="relative group">
+          {/* Dropdown Usuario */}
+          <li className="relative">
             <button
-              onClick={toggleDropdown}
-              className="flex items-center space-x-2 text-sm hover:text-white transition-all duration-300"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 text-sm hover:text-white"
             >
               <span>{user.name}</span>
-              {/* Flecha */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -98,61 +139,48 @@ const Navbar: React.FC = () => {
                 />
               </svg>
             </button>
-
-            {/* Línea debajo del nombre de usuario */}
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-
-            {/* Dropdown de usuario */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg">
-                <div className="px-4 py-2 text-sm">
-                  <p>{user.name}</p>
-                  <p className="text-gray-400">{user.email}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
-                >
-                  Logout
-                </button>
+            <div
+              className={`absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg ${
+                isDropdownOpen ? "block" : "hidden"
+              }`}
+            >
+              <div className="px-4 py-2 text-sm">
+                <p>{user.name}</p>
+                <p className="text-gray-400">{user.email}</p>
               </div>
-            )}
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
+              >
+                Logout
+              </button>
+            </div>
           </li>
         </ul>
 
-        {/* Botón de hamburguesa */}
+        {/* Menú Móvil Hamburger */}
         <button
-          className="lg:hidden flex flex-col justify-center items-center space-y-1 relative z-50"
-          onClick={toggleMenu}
+          onClick={() => setIsOpen(!isOpen)}
+          className="lg:hidden flex flex-col justify-between items-center w-6 h-6 z-50" // Flex container for hamburger
         >
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "rotate-45 translate-y-1.5" : ""}`}
-          ></span>
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "opacity-0" : ""}`}
-          ></span>
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "-rotate-45 -translate-y-1.5" : ""}`}
-          ></span>
+          <span className="block w-full h-1 bg-gray-400 mb-1"></span> {/* Línea 1 */}
+          <span className="block w-full h-1 bg-gray-400 mb-1"></span> {/* Línea 2 */}
+          <span className="block w-full h-1 bg-gray-400"></span> {/* Línea 3 */}
         </button>
 
-        {/* Menú móvil */}
+        {/* Menú Móvil */}
         <div
-          className={`lg:hidden fixed inset-0 bg-black bg-opacity-90 transform transition-all duration-700 ease-in-out ${
-            isOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-          }`}
+          className={`fixed inset-0 bg-black bg-opacity-90 transform ${
+            isOpen ? "translate-y-0" : "-translate-y-full"
+          } transition-transform duration-300`}
         >
-          <ul className="flex flex-col items-center justify-center h-full space-y-6 text-sm">
+          <ul className="flex flex-col items-center justify-center h-full space-y-6">
             {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`block px-6 py-2 rounded-md text-gray-200 ${
-                    pathname === item.href
-                      ? "bg-gray-800 text-white"
-                      : "hover:bg-gray-800 hover:text-white"
-                  } transition-all duration-500`}
-                  onClick={() => setIsOpen(false)}
+                  className="text-white text-lg hover:underline"
+                  onClick={() => setIsOpen(false)} // Cierra el menú al hacer clic
                 >
                   {item.label}
                 </Link>

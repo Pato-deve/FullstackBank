@@ -1,11 +1,8 @@
 "use client";
-import WithHeader from "../WithHeader";
 import { useState, useEffect } from "react";
-import axiosInstance from "@/axiosConfig"; // Asegúrate de tener configurado tu axios
-import ForexExchange from "./ForexExchange";
+import axiosInstance from "@/axiosConfig";
 
 export default function Cuentas() {
-  const [openExchangeModal, setOpenExchangeModal] = useState(false);
   const [cuentas, setCuentas] = useState<any[]>([]);
   const [resumenFinanciero, setResumenFinanciero] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +18,7 @@ export default function Cuentas() {
         setCuentas(response.data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Error al cargar las cuentas.");
         setLoading(false);
       });
@@ -31,7 +28,7 @@ export default function Cuentas() {
       .then((response) => {
         setResumenFinanciero(response.data);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Error al cargar el resumen financiero.");
       });
   }, []);
@@ -44,128 +41,125 @@ export default function Cuentas() {
     return <div className="text-center text-red-500">{error}</div>;
   }
 
-  // Filtramos los saldos por moneda seleccionada
-  const saldoPesos = cuentas.reduce((acc, cuenta) => acc + cuenta.balance_pesos, 0);
-  const saldoDolares = cuentas.reduce((acc, cuenta) => acc + cuenta.balance_dolares, 0);
-
   if (!resumenFinanciero) {
     return <div className="text-center">Datos del resumen financiero no disponibles.</div>;
   }
 
   return (
-    <>
-      <WithHeader
-        title="Cuenta 123-45678/1"
-        submenuOptions={[
-          {
-            id: 1,
-            text: "Convertir divisas",
-            callback: () => setOpenExchangeModal(true),
-          },
-        ]}
-        tags={[
-          {
-            text: "Movimientos en pesos",
-            callback: () => setSelectedCurrency("pesos"),
-          },
-          {
-            text: "Movimientos en dólares",
-            callback: () => setSelectedCurrency("dolares"),
-          },
-        ]}
-      >
-       <div className="flex flex-col items-center justify-center mx-16 mb-8 mt-4 gap-y-4">
-        {/* Mostrar solo el saldo correspondiente */}
+    <div className="px-4 py-8">
+      <div className="mb-8">
+        {/* Contenedor para la cuenta */}
+        <div className="bg-gray-800 bg-opacity-5 p-6 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
+          <h1 className="text-2xl font-bold">Cuenta 123-45678/1</h1>
+          <p className="text-sm text-gray-700 mt-2">Resumen de tu cuenta</p>
+        </div>
+      </div>
+
+      {/* Botones para cambiar moneda */}
+      <div className="flex justify-center gap-4 mt-4 mb-8">
+        <button
+          onClick={() => setSelectedCurrency("pesos")}
+          className={`px-4 py-2 rounded-lg ${
+            selectedCurrency === "pesos" ? "bg-gray-900 text-white" : "bg-gray-200"
+          }`}
+        >
+          Movimientos en pesos
+        </button>
+        <button
+          onClick={() => setSelectedCurrency("dolares")}
+          className={`px-4 py-2 rounded-lg ${
+            selectedCurrency === "dolares" ? "bg-gray-900 text-white" : "bg-gray-200"
+          }`}
+        >
+          Movimientos en dólares
+        </button>
+      </div>
+
+      {/* Movimientos en Pesos / Dólares */}
+      <div className="flex flex-col items-center gap-6 mb-8">
         {selectedCurrency === "pesos" && (
-          <div className="flex flex-col items-center gap-2 bg-cyan-600 p-4 rounded-lg shadow-lg w-full max-w-sm text-center">
-            <div className="text-2xl font-semibold">Saldo en Pesos</div>
-            <div className="text-3xl text-blue-900 font-bold">{resumenFinanciero.balances_totales.pesos}</div>
+          <div className="bg-gray-900 bg-opacity-90 text-white p-6 rounded-xl shadow-inner shadow-xl w-full max-w-sm">
+            <div className="text-lg font-semibold">Saldo en Pesos</div>
+            <div className="text-3xl font-bold">{resumenFinanciero.balances_totales.pesos}</div>
           </div>
         )}
-
         {selectedCurrency === "dolares" && (
-          <div className="flex flex-col items-center gap-2 bg-emerald-200 p-4 rounded-lg shadow-lg w-full max-w-sm text-center">
-            <div className="text-2xl font-semibold">Saldo en Dólares</div>
-            <div className="text-3xl text-green-800 font-bold">{resumenFinanciero.balances_totales.dolares}</div>
+          <div className="bg-gray-800 text-white p-6 rounded-xl shadow-lg w-full max-w-sm">
+            <div className="text-lg font-semibold">Saldo en Dólares</div>
+            <div className="text-3xl font-bold">{resumenFinanciero.balances_totales.dolares}</div>
           </div>
         )}
       </div>
 
-        <main className="te xt-xl gap-y-4">
-          {/* Resumen Financiero */}
-          <section className="my-8">
-            <h3 className="text-2xl font-semibold">Resumen Financiero</h3>
-            <div className="mt-4 bg-gray-100 p-6 rounded-lg shadow-md space-y-2 text-lg text-gray-800">
-              {selectedCurrency === "pesos" && (
-                <p className="border-b border-gray-400 pb-2 w-80">
-                  <strong>Total en Pesos:</strong> {resumenFinanciero.balances_totales.pesos}
-                </p>
-              )}
-              {selectedCurrency === "dolares" && (
-                <p className="border-b border-gray-400 pb-2 w-80">
-                  <strong>Total en Dólares:</strong> {resumenFinanciero.balances_totales.dolares}
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* Mostrar préstamos activos solo si hay datos */}
-          {resumenFinanciero.prestamos && (
-            <section className="my-8 bg-gray-100 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold">Préstamos Activos</h3>
-              <div className="mt-4 space-y-2 text-lg">
-                <p className="border-b border-gray-400 pb-2 w-80">
-                  <strong>Total Pendiente:</strong> {resumenFinanciero.prestamos.total_pendiente}
-                </p>
-                <p className="border-b border-gray-400 pb-2 w-80">
-                  <strong>Próxima Cuota:</strong> {resumenFinanciero.prestamos.proxima_cuota}
-                </p>
-                <p className="border-b border-gray-400 pb-2 w-80">
-                  <strong>Préstamos Activos:</strong> {resumenFinanciero.prestamos.cantidad_activos}
-                </p>
-              </div>
-            </section>
+      {/* Resumen Financiero */}
+      <section className="my-8 max-w-xl mx-auto">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Resumen Financiero</h3>
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-300">
+          {selectedCurrency === "pesos" && (
+            <p className="border-b border-gray-300 pb-2">
+              <strong>Total en Pesos:</strong> {resumenFinanciero.balances_totales.pesos}
+            </p>
           )}
-
-          {/* Mostrar transferencias solo si hay datos */}
-          {resumenFinanciero.transferencias_recientes && (
-            <section className="my-8 bg-gray-100 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold">Transferencias Recientes</h3>
-              <ul className="mt-4 space-y-4">
-                {resumenFinanciero.transferencias_recientes.map((transferencia: any, index: number) => (
-                  <li key={index} className="p-4 bg-white shadow-md rounded-lg border-b border-gray-200">
-                    <p><strong>Cuenta Origen:</strong> {transferencia.cuenta_origen}</p>
-                    <p><strong>Cuenta Destino:</strong> {transferencia.cuenta_destino}</p>
-                    <p><strong>Monto:</strong> {transferencia.monto}</p>
-                    <p><strong>Fecha:</strong> {transferencia.fecha}</p>
-                    <p><strong>Descripción:</strong> {transferencia.descripcion}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {selectedCurrency === "dolares" && (
+            <p className="border-b border-gray-300 pb-2">
+              <strong>Total en Dólares:</strong> {resumenFinanciero.balances_totales.dolares}
+            </p>
           )}
+        </div>
+      </section>
 
-          {/* Mostrar pagos solo si hay datos */}
-          {resumenFinanciero.pagos_recientes && (
-            <section className="my-8 bg-gray-100 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold">Pagos Recientes</h3>
-              <ul className="mt-4 space-y-4">
-                {resumenFinanciero.pagos_recientes.map((pago: any, index: number) => (
-                  <li key={index} className="p-4 bg-white shadow-md rounded-lg border-b border-gray-200">
-                    <p><strong>Servicio:</strong> {pago.servicio}</p>
-                    <p><strong>Monto:</strong> {pago.monto}</p>
-                    <p><strong>Estado:</strong> {pago.estado}</p>
-                    <p><strong>Fecha de Pago:</strong> {pago.fecha_pago}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </main>
-      </WithHeader>
+      {/* Préstamos Activos */}
+      {resumenFinanciero.prestamos && (
+        <section className="my-8 max-w-xl mx-auto">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Préstamos Activos</h3>
+          <div className="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
+            <p className="border-b border-gray-300 pb-2">
+              <strong>Total Pendiente:</strong> {resumenFinanciero.prestamos.total_pendiente}
+            </p>
+            <p className="border-b border-gray-300 pb-2">
+              <strong>Próxima Cuota:</strong> {resumenFinanciero.prestamos.proxima_cuota}
+            </p>
+            <p>
+              <strong>Préstamos Activos:</strong> {resumenFinanciero.prestamos.cantidad_activos}
+            </p>
+          </div>
+        </section>
+      )}
 
-      {/* Modal de Forex */}
-      <ForexExchange open={openExchangeModal} onClose={() => setOpenExchangeModal(false)} />
-    </>
+      {/* Transferencias Recientes */}
+      {resumenFinanciero.transferencias_recientes && (
+        <section className="my-8 max-w-xl mx-auto">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Transferencias Recientes</h3>
+          <ul className="space-y-4">
+            {resumenFinanciero.transferencias_recientes.map((transferencia: any, index: number) => (
+              <li key={index} className="p-4 bg-gray-50 shadow-md rounded-xl border border-gray-300">
+                <p><strong>Cuenta Origen:</strong> {transferencia.cuenta_origen}</p>
+                <p><strong>Cuenta Destino:</strong> {transferencia.cuenta_destino}</p>
+                <p><strong>Monto:</strong> {transferencia.monto}</p>
+                <p><strong>Fecha:</strong> {transferencia.fecha}</p>
+                <p><strong>Descripción:</strong> {transferencia.descripcion}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Pagos Recientes */}
+      {resumenFinanciero.pagos_recientes && (
+        <section className="my-8 max-w-xl mx-auto">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Pagos Recientes</h3>
+          <ul className="space-y-4">
+            {resumenFinanciero.pagos_recientes.map((pago: any, index: number) => (
+              <li key={index} className="p-4 bg-gray-50 shadow-md rounded-xl border border-gray-300">
+                <p><strong>Servicio:</strong> {pago.servicio}</p>
+                <p><strong>Monto:</strong> {pago.monto}</p>
+                <p><strong>Estado:</strong> {pago.estado}</p>
+                <p><strong>Fecha de Pago:</strong> {pago.fecha_pago}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }
