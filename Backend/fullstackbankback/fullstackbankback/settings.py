@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'usuarios',
     'finanzas',
+    'sucursales',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +67,7 @@ import os
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
