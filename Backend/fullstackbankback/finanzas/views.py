@@ -58,6 +58,7 @@ class TransferenciaViewSet(viewsets.ModelViewSet):
             raise serializer.ValidationError('No tienes permiso para usar esta cuenta como origen.')
         serializer.save()
 
+
 class PrestamoViewSet(viewsets.ModelViewSet):
     serializer_class = PrestamoSerializer
     permission_classes = [IsAuthenticated, EsEmpleado]
@@ -87,17 +88,37 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
-    def anular(self, request,pk=None):
+    def anular(self, request, pk=None):
         prestamo = self.get_object()
         try:
             prestamo.anular()
-            return Response({'mensaje':'Préstamo anulado'}, status=status.HTTP_200_OK)
+            return Response({'mensaje': 'Préstamo anulado'}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class PagoViewSet(viewsets.ModelViewSet):
-    queryset = Servicios.objects.all()
     serializer_class = ServiciosSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Servicios.objects.filter(cuenta__usuario=self.request.user).order_by('-fecha_pago')
+
+    def perform_create(self, serializer):
+        cuenta = serializer.validated_data['cuenta']
+        monto = serializer.validated_data['monto']
+
+        if cuenta.usuario != self.request.user:
+            raise serializers.ValidationError("La cuenta no pertenece al usuario autenticado.")
+
+        if cuenta.balance_pesos < monto:
+            raise serializers.ValidationError("El balance de la cuenta es insuficiente.")
+
+        cuenta.balance_pesos -= monto
+        cuenta.save()
+
+        serializer.save()
+
 
 class ResumenFinancieroView(APIView):
     permission_classes = [IsAuthenticated]
@@ -105,17 +126,14 @@ class ResumenFinancieroView(APIView):
     def get(self, request):
         usuario = self.request.user
 
-        # balance
         cuentas = Cuenta.objects.filter(usuario=usuario)
         balance_pesos = sum(cuenta.balance_pesos for cuenta in cuentas)
         balance_dolares = sum(cuenta.balance_dolares for cuenta in cuentas)
 
-        # prestamos activos
         prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='activo')
         total_pendiente = sum(prestamo.pago_total for prestamo in prestamos_activos)
         proxima_cuota = sum(prestamo.cuota_mensual for prestamo in prestamos_activos)
 
-        # últimas transferencias
         transferencias = Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')[:5]
         transferencias_data = [
             {
@@ -128,7 +146,6 @@ class ResumenFinancieroView(APIView):
             for transferencia in transferencias
         ]
 
-        # pagos realizados en el mes
         ultimo_mes = datetime.now() - timedelta(days=30)
         pagos = Servicios.objects.filter(cuenta__usuario=usuario, fecha_pago__gte=ultimo_mes)
         pagos_data = [
