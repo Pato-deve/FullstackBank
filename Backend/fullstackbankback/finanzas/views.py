@@ -5,7 +5,6 @@ from rest_framework.decorators import action
 from rest_framework import viewsets, permissions, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
-
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
 from .serializers import CuentaSerializer, TarjetaSerializer, TransferenciaSerializer, PrestamoSerializer, ServiciosSerializer
 from sucursales.permissions import EsEmpleado
