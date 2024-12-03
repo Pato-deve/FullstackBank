@@ -2,29 +2,25 @@ from datetime import datetime, timedelta
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
-from rest_framework import serializers
-
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
 from .serializers import CuentaSerializer, TarjetaSerializer, TransferenciaSerializer, PrestamoSerializer, ServiciosSerializer
+from sucursales.permissions import EsEmpleado
+
 
 class CuentaViewSet(viewsets.ModelViewSet):
     serializer_class = CuentaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Filtra las cuentas del usuario autenticado
         return Cuenta.objects.filter(usuario=self.request.user)
 
     def perform_create(self, serializer):
-        # Guarda la cuenta con el usuario autenticado
-        # El número de cuenta se genera automáticamente en el modelo
         serializer.save(usuario=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        # Lógica para prevenir eliminar cuentas con saldo o tarjetas asociadas
         cuenta = self.get_object()
         if cuenta.balance_pesos > 0 or cuenta.balance_dolares > 0:
             raise ValidationError("No puedes eliminar una cuenta con saldo.")
@@ -62,13 +58,22 @@ class TransferenciaViewSet(viewsets.ModelViewSet):
             raise serializer.ValidationError('No tienes permiso para usar esta cuenta como origen.')
         serializer.save()
 
+
 class PrestamoViewSet(viewsets.ModelViewSet):
     serializer_class = PrestamoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated, EsEmpleado]
 
     def get_queryset(self):
         usuario = self.request.user
-        return Prestamo.objects.filter(cuenta__usuario=usuario)
+        if usuario.es_empleado:
+            return Prestamo.objects.filter(cuenta__usuario__sucursal=usuario.sucursal)
+        return Prestamo.objects.none()
+
+    def perform_create(self, serializer):
+        cuenta = serializer.validated_data['cuenta']
+        if cuenta.usuario.sucursal != self.request.user.sucursal:
+            raise serializers.ValidationError('No puedes registrar un préstamo para un cliente de otra sucursal.')
+        serializer.save()
 
     @action(detail=False, methods=['get'])
     def activos(self, request):
@@ -81,33 +86,39 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         prestamos_pagados = self.get_queryset().filter(estado='pagado')
         serializer = self.get_serializer(prestamos_pagados, many=True)
         return Response(serializer.data)
-    
+
+    @action(detail=True, methods=['post'])
+    def anular(self, request, pk=None):
+        prestamo = self.get_object()
+        try:
+            prestamo.anular()
+            return Response({'mensaje': 'Préstamo anulado'}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class PagoViewSet(viewsets.ModelViewSet):
     serializer_class = ServiciosSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Filtra los pagos realizados por el usuario autenticado, ordenados por fecha descendente
         return Servicios.objects.filter(cuenta__usuario=self.request.user).order_by('-fecha_pago')
 
     def perform_create(self, serializer):
         cuenta = serializer.validated_data['cuenta']
         monto = serializer.validated_data['monto']
 
-        # Validar que la cuenta pertenece al usuario autenticado
         if cuenta.usuario != self.request.user:
             raise serializers.ValidationError("La cuenta no pertenece al usuario autenticado.")
 
-        # Validar que el balance es suficiente
         if cuenta.balance_pesos < monto:
             raise serializers.ValidationError("El balance de la cuenta es insuficiente.")
 
-        # Actualizar el balance de la cuenta
         cuenta.balance_pesos -= monto
         cuenta.save()
 
-        # Crear el pago, el campo `fecha_pago` se asignará automáticamente
         serializer.save()
+
 
 class ResumenFinancieroView(APIView):
     permission_classes = [IsAuthenticated]
@@ -115,17 +126,14 @@ class ResumenFinancieroView(APIView):
     def get(self, request):
         usuario = self.request.user
 
-        # balance
         cuentas = Cuenta.objects.filter(usuario=usuario)
         balance_pesos = sum(cuenta.balance_pesos for cuenta in cuentas)
         balance_dolares = sum(cuenta.balance_dolares for cuenta in cuentas)
 
-        # prestamos activos
         prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='activo')
         total_pendiente = sum(prestamo.pago_total for prestamo in prestamos_activos)
         proxima_cuota = sum(prestamo.cuota_mensual for prestamo in prestamos_activos)
 
-        # últimas transferencias
         transferencias = Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')[:5]
         transferencias_data = [
             {
@@ -138,7 +146,6 @@ class ResumenFinancieroView(APIView):
             for transferencia in transferencias
         ]
 
-        # pagos realizados en el mes
         ultimo_mes = datetime.now() - timedelta(days=30)
         pagos = Servicios.objects.filter(cuenta__usuario=usuario, fecha_pago__gte=ultimo_mes)
         pagos_data = [
