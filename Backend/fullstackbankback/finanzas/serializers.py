@@ -1,9 +1,6 @@
-import datetime
 from django.db import transaction
-from rest_framework import serializers
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo,Servicios
 from rest_framework import serializers
-from .models import Cuenta
 
 class CuentaSerializer(serializers.ModelSerializer):
     class Meta:

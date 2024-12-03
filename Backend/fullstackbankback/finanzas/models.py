@@ -1,11 +1,6 @@
 import datetime
-from random import random, randint
-
-from django.db import models
-from django.conf import settings
-
+from random import randint
 import random
-import string
 from django.db import models
 from django.conf import settings
 
@@ -23,12 +18,10 @@ class Cuenta(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.numero_cuenta:
-            # Generar un número de cuenta único con el formato xxx-xxxxx
             self.numero_cuenta = self.generar_numero_cuenta()
         super().save(*args, **kwargs)
 
     def generar_numero_cuenta(self):
-        # Genera un número aleatorio para la cuenta en el formato xxx-xxxxx
         return f"{random.randint(100, 999)}-{random.randint(10000, 99999)}"
     
     def __str__(self):
@@ -98,9 +91,28 @@ class Prestamo(models.Model):
     meses_duracion = models.PositiveBigIntegerField()
     estado = models.CharField(
         max_length=10,
-        choices=[('activo','Activo'),('pagado','Pagado')],
+        choices=[('activo','Activo'),('pagado','Pagado'),('anulado','Anulado')],
         default='activo'
     )
+
+    def calcular_cuotas(self):
+        self.pago_total = self.monto_prestado + (self.monto_prestado * (self.interes / 100))
+        self.cuota_mensual = self.pago_total /self.meses_duracion
+
+    def anular(self):
+        if self.estado != 'activo':
+            raise ValueError("Solo se pueden anular préstamos activos.")
+        self.cuenta.balance_pesos -= self.monto_prestado
+        self.estado = 'anulado'
+        self.save()
+        self.cuenta.save()
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self .calcular_cuotas()
+            self.cuenta.balance_pesos += self.monto_prestado
+            self.cuenta.save()
+        super().save(*args, **kwargs)
 
     def actualizar_estado(self):
         cuotas_restantes = self.pago_total - (self.cuota_mensual * self.meses_duracion)
