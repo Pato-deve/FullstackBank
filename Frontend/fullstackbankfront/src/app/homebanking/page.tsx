@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import axiosInstance from "@/axiosConfig";
 import Cookies from "js-cookie";
-import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMoneyBillWave, faMoneyBillTransfer, faFile } from "@fortawesome/free-solid-svg-icons";
+import { faMoneyBillWave, faMoneyBillTransfer, faFile, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
+// Hook para obtener el resumen financiero
 function useResumenFinanciero() {
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +26,7 @@ function useResumenFinanciero() {
           setResumen(res.data);
           setLoading(false);
         })
-        .catch((error) => {
-          console.error("Error:", error);
+        .catch(() => {
           setError("No se pudo cargar el resumen financiero.");
           setLoading(false);
         });
@@ -39,125 +39,42 @@ function useResumenFinanciero() {
   return { resumen, loading, error };
 }
 
-function ModalCrearTarjeta({ onClose, onSubmit, cuentas }) {
-  const [proveedor, setProveedor] = useState("visa");
-  const [tipoTarjeta, setTipoTarjeta] = useState("debito");
-  const [cuentaId, setCuentaId] = useState(cuentas.length > 0 ? cuentas[0].id : "");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({ proveedor, tipo_tarjeta: tipoTarjeta, cuenta: cuentaId });
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg w-96">
-        <h2 className="text-xl font-bold mb-4">Crear Tarjeta</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block mb-2 font-medium">Proveedor de Tarjeta</label>
-            <select
-              value={proveedor}
-              onChange={(e) => setProveedor(e.target.value)}
-              className="w-full border rounded p-2"
-            >
-              <option value="visa">Visa</option>
-              <option value="mastercard">MasterCard</option>
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 font-medium">Tipo de Tarjeta</label>
-            <select
-              value={tipoTarjeta}
-              onChange={(e) => setTipoTarjeta(e.target.value)}
-              className="w-full border rounded p-2"
-            >
-              <option value="debito">Débito</option>
-              <option value="credito">Crédito</option>
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 font-medium">Cuenta Asociada</label>
-            <select
-              value={cuentaId}
-              onChange={(e) => setCuentaId(e.target.value)}
-              className="w-full border rounded p-2"
-            >
-              {cuentas.map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>
-                  {cuenta.tipo_cuenta}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex justify-end mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Crear
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-export default function HomeBanking() {
-  const { resumen, loading, error } = useResumenFinanciero();
-  const [showModal, setShowModal] = useState(false);
-  const [cuentas, setCuentas] = useState([]);
-  const [tarjetas, setTarjetas] = useState([]);
-
-  const handleModalClose = () => setShowModal(false);
-
-  const handleModalSubmit = (data) => {
-    const token = Cookies.get("authToken");
-    axiosInstance
-      .post(
-        "http://localhost:8000/api/finanzas/tarjetas/",
-        {
-          tipo_tarjeta: data.tipo_tarjeta,
-          proveedor: data.proveedor,
-          cuenta: data.cuenta,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then(() => {
-        console.log("Tarjeta creada exitosamente.");
-        window.location.reload();
-      })
-      .catch((error) => {
-        console.error("Error al crear la tarjeta:", error.response?.data || error.message);
-      });
-  };
+// Hook para obtener las últimas 3 transferencias
+function useUltimasTransferencias() {
+  const [transferencias, setTransferencias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const token = Cookies.get("authToken");
     if (token) {
       axiosInstance
-        .get("http://localhost:8000/api/finanzas/cuentas/", {
+        .get("http://localhost:8000/api/finanzas/transferencias/", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
-        .then((res) => setCuentas(res.data))
-        .catch((error) => console.error("Error obteniendo las cuentas:", error));
+        .then((res) => {
+          setTransferencias(res.data.slice(0, 3));  // Mostrar solo las 3 últimas transferencias
+          setLoading(false);
+        })
+        .catch(() => {
+          setError("No se pudieron cargar las transferencias.");
+          setLoading(false);
+        });
+    } else {
+      setError("Token no encontrado");
+      setLoading(false);
     }
   }, []);
+
+  return { transferencias, loading, error };
+}
+
+export default function HomeBanking() {
+  const { resumen, loading, error } = useResumenFinanciero();
+  const { transferencias, loading: loadingTransferencias, error: errorTransferencias } = useUltimasTransferencias();
+  const [tarjetas, setTarjetas] = useState([]);
 
   useEffect(() => {
     const token = Cookies.get("authToken");
@@ -169,12 +86,12 @@ export default function HomeBanking() {
           },
         })
         .then((res) => setTarjetas(res.data))
-        .catch((error) => console.error("Error obteniendo las tarjetas:", error));
+        .catch(() => console.error("Error obteniendo las tarjetas"));
     }
   }, []);
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading || loadingTransferencias) return <div>Cargando...</div>;
+  if (error || errorTransferencias) return <div>{error || errorTransferencias}</div>;
 
   const { balances_totales } = resumen || {};
   const acciones = [
@@ -183,70 +100,88 @@ export default function HomeBanking() {
     { icon: faFile, label: "Movimientos" },
   ];
 
-  const tarjetaExistente = tarjetas.length > 0;
-  const primeraTarjeta = tarjetaExistente ? tarjetas[0] : null;
+  const primeraTarjeta = tarjetas.length > 0 ? tarjetas[0] : null;
 
   return (
-    <section className="bg-gray-200 min-h-screen py-20 px-6">
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold text-center mb-12">Tus Cuentas</h2>
+    <section className="content-wrapper py-20 px-2">
+      {/* Sección de cuentas */}
+      <section className="w-full max-w-sm mx-auto">
         {balances_totales ? (
-          <div className="bg-white shadow-md rounded-lg p-6 w-96 mx-auto">
+          <div className="bg-white shadow-md rounded-lg p-6">
             <h3 className="text-gray-600 text-lg font-semibold">Saldo Total:</h3>
             <p className="text-gray-800 font-bold text-xl">${balances_totales.pesos}</p>
-            <div className="flex justify-around mt-4">
+            <div className="flex justify-around mt-8">
               {acciones.map((action, index) => (
                 <div key={index} className="flex flex-col items-center">
-                  <button
-                    className="w-16 h-16 bg-gray-100 text-gray-700 rounded-full shadow-md flex items-center justify-center"
-                  >
+                  <button className="w-16 h-16 bg-gray-100 text-gray-700 rounded-full shadow-md flex items-center justify-center">
                     <FontAwesomeIcon icon={action.icon} className="text-2xl" />
                   </button>
                   <span className="text-sm mt-2">{action.label}</span>
                 </div>
               ))}
             </div>
+            {/* Mover la tarjeta aquí */}
+            {primeraTarjeta ? (
+              <div className="mt-8 flex justify-center">
+                <Link href="/homebanking/tarjetas">
+                  <div
+                    className={`cursor-pointer bg-white p-4 rounded-lg shadow-lg w-80 h-20 text-left overflow-hidden ${
+                      primeraTarjeta.tipo_tarjeta === "credito"
+                        ? "bg-gradient-to-br from-gray-800 to-black"
+                        : "bg-gradient-to-br from-blue-900 to-blue-950"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start h-full">
+                      <div className="flex flex-col justify-start space-y-1">
+                        <span className="text-white text-sm font-semibold">{primeraTarjeta.tipo_tarjeta.toUpperCase()}</span>
+                        <span className="text-white text-xs">{primeraTarjeta.proveedor}</span>
+                      </div>
+                      <div className="flex items-end space-x-2">
+                        <p className="text-gray-200 text-xs">Ver info</p>
+                        <FontAwesomeIcon icon={faChevronRight} className="text-gray-200 text-xs" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ) : (
+              <p className="text-center text-gray-600">No tienes tarjetas disponibles.</p>
+            )}
           </div>
         ) : (
-          <p>No tienes cuentas disponibles.</p>
+          <p className="text-center text-gray-600">No tienes cuentas disponibles.</p>
         )}
       </section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold text-center mb-6">Tus Tarjetas</h2>
-        {tarjetaExistente ? (
-          <ul className="space-y-4">
-            <Link href="/homebanking/tarjetas">
-              <li className="bg-gradient-to-r from-pink-500 to-blue-700 text-white p-8 rounded-xl shadow-xl hover:shadow-2xl cursor-pointer transition-all duration-300 w-full max-w-sm mx-auto">
-                <div className="text-center font-semibold text-lg">
-                  {/* Todo el contenedor de la tarjeta es clickeable */}
-                  {primeraTarjeta.tipo_tarjeta} - {primeraTarjeta.proveedor}
-                </div>
-              </li>
-            </Link>
-          </ul>
-        ) : (
-          <p className="text-center">No tienes tarjetas disponibles.</p>
-        )}
-        {!tarjetaExistente && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-full"
-            >
-              Crear Tarjeta
-            </button>
+      {/* Sección de últimas transacciones */}
+      <section className="mt-12">
+        <h2 className="text-xl font-semibold text-center mb-8">Tus Últimas Transacciones</h2>
+        {transferencias.length > 0 ? (
+          <div className="flex justify-center w-full">
+          <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
+            {transferencias.map((transferencia, index) => (
+              <div key={index} className="border-b py-3">
+                <p className="text-gray-600 text-sm">Fecha: {transferencia.fecha}</p>
+                <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
+                <p className="text-gray-600 text-sm">Destinatario: {transferencia.destinatario}</p>
+              </div>
+            ))}
+            </div>
           </div>
+        ) : (
+          <p className="text-center text-gray-600">No tienes transacciones recientes.</p>
         )}
       </section>
 
-      {showModal && (
-        <ModalCrearTarjeta
-          onClose={handleModalClose}
-          onSubmit={handleModalSubmit}
-          cuentas={cuentas}
-        />
-      )}
+      {/* Sección de préstamo */}
+      <section className="mt-12">
+        <Link href="/homebanking/prestamos">
+          <div className="bg-gradient-to-br from-gray-700 to-gray-400 text-white p-4 rounded-lg shadow-md text-center max-h-20 max-w-sm mx-auto">
+            <h2 className="text-md font-semibold">¡Pedí un préstamo!</h2>
+            <p className="mt-2 text-m">Hasta $1,200,000.</p>
+          </div>
+        </Link>
+      </section>
     </section>
   );
 }

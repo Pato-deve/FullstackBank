@@ -32,12 +32,18 @@ class RegistroUsuarioView(APIView):
     def post(self, request):
         serializer = RegistroSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({'mensaje': 'Usuario registrado exitosamente'}, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+
+            # Generar tokens para el usuario recién registrado
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'mensaje': 'Usuario registrado exitosamente',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+            }, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
-        return Response({'mensaje': 'Solo para usuarios autenticados'})
 
 
 class DetalleUsuarioView(APIView):

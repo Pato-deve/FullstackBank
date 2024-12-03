@@ -1,34 +1,62 @@
-"use client"; // Añadir esta línea al inicio del archivo
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Este hook necesita el componente marcado como cliente
-import Cookies from 'js-cookie';
+import { usePathname } from "next/navigation";
+import Cookies from "js-cookie";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser } from "@fortawesome/free-regular-svg-icons";
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Menú móvil
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown usuario
+  const [isMobile, setIsMobile] = useState(false); // Detectar si es móvil
+  const [user, setUser] = useState<{ username: string; email: string } | null>(null); // Usuario logueado
   const pathname = usePathname();
 
-  const user = {
-    name: 'Juan Pérez',
-    email: 'juan@example.com',
+  // Función para obtener los datos del usuario
+  const fetchUser = async () => {
+    try {
+      const token = Cookies.get("authToken"); // Obtiene el token del almacenamiento de cookies
+      if (!token) throw new Error("No token found");
+
+      const response = await fetch("http://localhost:8000/api/usuarios/detalle/", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Adjunta el token en el encabezado
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Response status:", response.status, response.statusText);
+        throw new Error("Failed to fetch user");
+      }
+
+      const data = await response.json();
+      console.log("User data fetched:", data); // Depuración
+
+      setUser({
+        username: data.first_name, // Usamos first_name como username
+        email: data.email,
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setUser(null); // Resetea el usuario si hay un error
+    }
   };
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
+  // Función de logout
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    Cookies.remove('authToken');
-    window.location.href = 'http://localhost:3000';
+    localStorage.removeItem("authToken");
+    Cookies.remove("authToken");
+    window.location.href = "/";
   };
 
+  // Obtener los datos del usuario cuando el componente se monte
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  // Definir los elementos del menú de navegación
   const navItems = [
     { href: "/homebanking", label: "HomeBanking" },
     { href: "/homebanking/cuentas", label: "Cuentas" },
@@ -38,51 +66,90 @@ const Navbar: React.FC = () => {
     { href: "/homebanking/transferencias", label: "Transferencias" },
   ];
 
+  // Detectar el tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    handleResize(); // Verificar al montar
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <nav className="bg-black text-gray-200 px-4 py-3 shadow-md border-b border-gray-700">
       <div className="w-full flex items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <img
-            src="logoRest.png"
-            alt="Logo Rest"
-            className="w-16 h-16 object-contain"
-          />
-          <h1 className="text-lg font-bold tracking-wide">
-            <Link href="/homebanking" className="hover:text-white transition-all duration-500">
-              Rest
+        {/* Logo o Usuario */}
+        <div className="flex items-center">
+          {/* Pantallas grandes: Logo */}
+          <div className="hidden lg:flex items-center space-x-6">
+            <Link href="/homebanking">
+              <img
+                src="/logoRest.png"
+                alt="Logo Rest"
+                className="w-16 h-16 object-contain"
+              />
             </Link>
-          </h1>
+            <h1 className="text-lg font-bold tracking-wide">
+              <Link href="/homebanking">Rest</Link>
+            </h1>
+          </div>
+
+          {/* Pantallas pequeñas: Ícono Usuario */}
+          <div className="lg:hidden relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="text-xl hover:text-white"
+            >
+              <FontAwesomeIcon icon={faUser} className="w-8 h-8 text-gray-400" />
+            </button>
+            <div
+              className={`absolute ${
+                isDropdownOpen ? "block" : "hidden"
+              } top-full mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50`}
+            >
+              {user ? (
+                <>
+                  <div className="px-4 py-2 text-sm">
+                    <p>{user.username}</p> {/* Mostrar primer nombre */}
+                    <p className="text-gray-400">{user.email}</p> {/* Mostrar correo */}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <p className="px-4 py-2 text-sm text-gray-500">Cargando...</p>
+              )}
+            </div>
+          </div>
         </div>
 
-        <ul className="hidden lg:flex space-x-6 text-sm">
+        {/* Menú Desktop */}
+        <ul className="hidden lg:flex space-x-6 text-sm items-center">
           {navItems.map((item) => (
-            <li key={item.href} className="relative group">
+            <li key={item.href}>
               <Link
                 href={item.href}
                 className={`${
-                  pathname === item.href
-                    ? "text-white"
-                    : "hover:text-white"
+                  pathname === item.href ? "text-white" : "hover:text-white"
                 } transition-all duration-300`}
               >
                 {item.label}
               </Link>
-              <span
-                className={`absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ${
-                  pathname === item.href ? "scale-x-100" : ""
-                }`}
-              ></span>
             </li>
           ))}
-
-          {/* Usuario con hover efecto */}
-          <li className="relative group">
+          {/* Dropdown Usuario */}
+          <li className="relative">
             <button
-              onClick={toggleDropdown}
-              className="flex items-center space-x-2 text-sm hover:text-white transition-all duration-300"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 text-sm hover:text-white"
             >
-              <span>{user.name}</span>
-              {/* Flecha */}
+              <span>{user?.username || "Usuario"}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -98,68 +165,30 @@ const Navbar: React.FC = () => {
                 />
               </svg>
             </button>
-
-            {/* Línea debajo del nombre de usuario */}
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-
-            {/* Dropdown de usuario */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg">
-                <div className="px-4 py-2 text-sm">
-                  <p>{user.name}</p>
-                  <p className="text-gray-400">{user.email}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            <div
+              className={`absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg ${
+                isDropdownOpen ? "block" : "hidden"
+              }`}
+            >
+              {user ? (
+                <>
+                  <div className="px-4 py-2 text-sm">
+                    <p>{user.username}</p> {/* Mostrar primer nombre */}
+                    <p className="text-gray-400">{user.email}</p> {/* Mostrar correo */}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <p className="px-4 py-2 text-sm text-gray-500">Cargando...</p>
+              )}
+            </div>
           </li>
         </ul>
-
-        {/* Botón de hamburguesa */}
-        <button
-          className="lg:hidden flex flex-col justify-center items-center space-y-1 relative z-50"
-          onClick={toggleMenu}
-        >
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "rotate-45 translate-y-1.5" : ""}`}
-          ></span>
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "opacity-0" : ""}`}
-          ></span>
-          <span
-            className={`block w-6 h-0.5 bg-gray-400 transition-all duration-500 ${isOpen ? "-rotate-45 -translate-y-1.5" : ""}`}
-          ></span>
-        </button>
-
-        {/* Menú móvil */}
-        <div
-          className={`lg:hidden fixed inset-0 bg-black bg-opacity-90 transform transition-all duration-700 ease-in-out ${
-            isOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-          }`}
-        >
-          <ul className="flex flex-col items-center justify-center h-full space-y-6 text-sm">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`block px-6 py-2 rounded-md text-gray-200 ${
-                    pathname === item.href
-                      ? "bg-gray-800 text-white"
-                      : "hover:bg-gray-800 hover:text-white"
-                  } transition-all duration-500`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </nav>
   );

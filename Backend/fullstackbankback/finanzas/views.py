@@ -14,18 +14,23 @@ class CuentaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # Filtra las cuentas del usuario autenticado
         return Cuenta.objects.filter(usuario=self.request.user)
 
     def perform_create(self, serializer):
+        # Guarda la cuenta con el usuario autenticado
+        # El número de cuenta se genera automáticamente en el modelo
         serializer.save(usuario=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
+        # Lógica para prevenir eliminar cuentas con saldo o tarjetas asociadas
         cuenta = self.get_object()
         if cuenta.balance_pesos > 0 or cuenta.balance_dolares > 0:
             raise ValidationError("No puedes eliminar una cuenta con saldo.")
         if cuenta.tarjetas.exists():
             raise ValidationError("No puedes eliminar una cuenta con una tarjeta asociada activa.")
         return super().destroy(request, *args, **kwargs)
+
 
 class TarjetaViewSet(viewsets.ModelViewSet):
     serializer_class = TarjetaSerializer
