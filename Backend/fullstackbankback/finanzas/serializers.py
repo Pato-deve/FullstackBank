@@ -104,3 +104,7 @@ class ServiciosSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servicios
         fields = ['id', 'cuenta', 'servicio', 'monto', 'estado', 'fecha_pago']
+        extra_kwargs = {
+            'estado': {'default': 'pendiente'},  # Valor por defecto para el estado
+            'fecha_pago': {'read_only': True}    # Hacer que el campo sea solo lectura
+        }

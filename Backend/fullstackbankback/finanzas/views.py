@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
+from rest_framework import serializers
 
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
 from .serializers import CuentaSerializer, TarjetaSerializer, TransferenciaSerializer, PrestamoSerializer, ServiciosSerializer
@@ -80,10 +81,33 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         prestamos_pagados = self.get_queryset().filter(estado='pagado')
         serializer = self.get_serializer(prestamos_pagados, many=True)
         return Response(serializer.data)
-
+    
 class PagoViewSet(viewsets.ModelViewSet):
-    queryset = Servicios.objects.all()
     serializer_class = ServiciosSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Filtra los pagos realizados por el usuario autenticado, ordenados por fecha descendente
+        return Servicios.objects.filter(cuenta__usuario=self.request.user).order_by('-fecha_pago')
+
+    def perform_create(self, serializer):
+        cuenta = serializer.validated_data['cuenta']
+        monto = serializer.validated_data['monto']
+
+        # Validar que la cuenta pertenece al usuario autenticado
+        if cuenta.usuario != self.request.user:
+            raise serializers.ValidationError("La cuenta no pertenece al usuario autenticado.")
+
+        # Validar que el balance es suficiente
+        if cuenta.balance_pesos < monto:
+            raise serializers.ValidationError("El balance de la cuenta es insuficiente.")
+
+        # Actualizar el balance de la cuenta
+        cuenta.balance_pesos -= monto
+        cuenta.save()
+
+        # Crear el pago, el campo `fecha_pago` se asignará automáticamente
+        serializer.save()
 
 class ResumenFinancieroView(APIView):
     permission_classes = [IsAuthenticated]
