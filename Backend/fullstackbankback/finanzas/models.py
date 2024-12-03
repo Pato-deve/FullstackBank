@@ -115,8 +115,8 @@ class Servicios(models.Model):
     cuenta = models.ForeignKey(Cuenta, on_delete=models.CASCADE, related_name='pagos')
     servicio = models.CharField(max_length=30)
     monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    estado = models.CharField(max_length=10)
-    fecha_pago = models.DateField()
+    estado = models.CharField(max_length=10, default='pendiente')  # Valor por defecto
+    fecha_pago = models.DateTimeField(auto_now_add=True)  # Usar DateTimeField para incluir la hora
 
     def __str__(self):
         return f"Pago de {self.monto} al servicio {self.servicio}"
