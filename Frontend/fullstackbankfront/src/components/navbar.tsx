@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
   ];
 
   if (isEmpleado) {
-    navItems.push({ href: "/panel-empleados", label: "Empleados" });
+    navItems.push({ href: "/homebanking/empleados", label: "Empleados" });
   }
 
   return (
