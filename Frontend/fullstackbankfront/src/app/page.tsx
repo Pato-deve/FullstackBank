@@ -65,7 +65,6 @@ const Login = () => {
     const data = await res.json();
 
     if (res.ok) {
-      // Guardar los tokens en localStorage y cookies
       localStorage.setItem('authToken', data.access);
       Cookies.set('authToken', data.access, {
         path: '/',
@@ -73,8 +72,10 @@ const Login = () => {
         secure: true,
       });
 
-      // Guardamos el rol del usuario
-      localStorage.setItem('isEmpleado', data.es_empleado); // Almacenamos el rol
+      localStorage.setItem('isEmpleado', data.es_empleado);
+      Cookies.set('isEmpleado', data.es_empleado,{
+        path:''
+      })
       window.location.href = '/homebanking';
     } else {
       setError(data.detail || 'Algo salió mal durante el registro');
@@ -83,14 +84,11 @@ const Login = () => {
 
   return (
     <div className="flex h-screen">
-      {/* Left side: Illustration */}
       <div className="hidden md:flex w-3/4 bg-gray-100 items-center justify-center">
         <ConceptArtLogin></ConceptArtLogin>
       </div>
 
-      {/* Right side: Form */}
       <div className="flex w-full md:w-1/4 h-full bg-white shadow-lg flex-col">
-        {/* Toggle Buttons */}
         <div className="flex justify-around items-center py-4 border-b">
           <button
             className={`text-lg font-semibold pb-2 ${!isRegistering ? 'border-b-2 border-black' : 'text-gray-500'}`}
@@ -106,7 +104,6 @@ const Login = () => {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit} className="flex flex-col justify-center items-center h-full px-8">
           <h2 className="text-3xl mb-6 font-bold text-center">
             {isRegistering ? 'Registro' : 'Inicio de Sesión'}

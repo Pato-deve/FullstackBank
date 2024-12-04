@@ -8,20 +8,19 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-regular-svg-icons";
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false); // Menú móvil
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown usuario
-  const [isMobile, setIsMobile] = useState(false); // Detectar si es móvil
-  const [user, setUser] = useState<{ username: string; email: string } | null>(null); // Usuario logueado
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [user, setUser] = useState<{ username: string; email: string } | null>(null);
+  const [isEmpleado, setIsEmpleado] = useState(false); // Estado para empleados
   const pathname = usePathname();
 
   const fetchUser = async () => {
     try {
-      const token = Cookies.get("authToken"); // Obtiene el token del almacenamiento de cookies
+      const token = Cookies.get("authToken");
       if (!token) throw new Error("No token found");
 
       const response = await fetch("http://localhost:8000/api/usuarios/detalle/", {
         headers: {
-          Authorization: `Bearer ${token}`, // Adjunta el token en el encabezado
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -31,31 +30,30 @@ const Navbar: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log("User data fetched:", data); // Depuración
-
       setUser({
-        username: data.first_name, // Usamos first_name como username
+        username: data.first_name,
         email: data.email,
       });
+
+      const empleadoStatus = localStorage.getItem("isEmpleado") === "true";
+      setIsEmpleado(empleadoStatus);
     } catch (error) {
       console.error("Error fetching user:", error);
-      setUser(null); // Resetea el usuario si hay un error
+      setUser(null);
     }
   };
 
-  // Función de logout
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     Cookies.remove("authToken");
+    Cookies.remove("isEmpleado");
     window.location.href = "/";
   };
 
-  // Obtener los datos del usuario cuando el componente se monte
   useEffect(() => {
     fetchUser();
   }, []);
 
-  // Definir los elementos del menú de navegación
   const navItems = [
     { href: "/homebanking", label: "HomeBanking" },
     { href: "/homebanking/cuentas", label: "Cuentas" },
@@ -65,23 +63,14 @@ const Navbar: React.FC = () => {
     { href: "/homebanking/transferencias", label: "Transferencias" },
   ];
 
-  // Detectar el tamaño de pantalla
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-
-    handleResize(); // Verificar al montar
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  if (isEmpleado) {
+    navItems.push({ href: "/panel-empleados", label: "Empleados" });
+  }
 
   return (
     <nav className="bg-black text-gray-200 px-4 py-3 shadow-md border-b border-gray-700">
       <div className="w-full flex items-center justify-between">
-        {/* Logo o Usuario */}
         <div className="flex items-center">
-          {/* Pantallas grandes: Logo */}
           <div className="hidden lg:flex items-center space-x-6">
             <Link href="/homebanking">
               <img
@@ -94,8 +83,6 @@ const Navbar: React.FC = () => {
               <Link href="/homebanking">Rest</Link>
             </h1>
           </div>
-
-          {/* Pantallas pequeñas: Ícono Usuario */}
           <div className="lg:hidden relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -111,8 +98,8 @@ const Navbar: React.FC = () => {
               {user ? (
                 <>
                   <div className="px-4 py-2 text-sm">
-                    <p>{user.username}</p> {/* Mostrar primer nombre */}
-                    <p className="text-gray-400">{user.email}</p> {/* Mostrar correo */}
+                    <p>{user.username}</p>
+                    <p className="text-gray-400">{user.email}</p>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -128,7 +115,6 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Menú Desktop */}
         <ul className="hidden lg:flex space-x-6 text-sm items-center">
           {navItems.map((item) => (
             <li key={item.href}>
@@ -142,7 +128,6 @@ const Navbar: React.FC = () => {
               </Link>
             </li>
           ))}
-          {/* Dropdown Usuario */}
           <li className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -172,8 +157,8 @@ const Navbar: React.FC = () => {
               {user ? (
                 <>
                   <div className="px-4 py-2 text-sm">
-                    <p>{user.username}</p> {/* Mostrar primer nombre */}
-                    <p className="text-gray-400">{user.email}</p> {/* Mostrar correo */}
+                    <p>{user.username}</p>
+                    <p className="text-gray-400">{user.email}</p>
                   </div>
                   <button
                     onClick={handleLogout}
