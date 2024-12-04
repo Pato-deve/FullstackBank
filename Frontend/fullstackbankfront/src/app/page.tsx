@@ -31,7 +31,6 @@ const Login = () => {
     const data = await res.json();
 
     if (res.ok) {
-      // Guardar el token en localStorage y en cookies
       localStorage.setItem('authToken', data.access);
       Cookies.set('authToken', data.access, {
         path: '/',
@@ -39,6 +38,7 @@ const Login = () => {
         secure: true,
       });
 
+      localStorage.setItem('isEmpleado', data.es_empleado);
       window.location.href = '/homebanking';
     } else {
       setError(data.error || 'Algo salió mal');
@@ -47,7 +47,7 @@ const Login = () => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const res = await fetch('http://localhost:8000/api/usuarios/registro/', {
       method: 'POST',
       headers: {
@@ -61,9 +61,9 @@ const Login = () => {
         last_name: lastName,
       }),
     });
-  
+
     const data = await res.json();
-  
+
     if (res.ok) {
       // Guardar los tokens en localStorage y cookies
       localStorage.setItem('authToken', data.access);
@@ -72,13 +72,14 @@ const Login = () => {
         sameSite: 'None',
         secure: true,
       });
-  
+
+      // Guardamos el rol del usuario
+      localStorage.setItem('isEmpleado', data.es_empleado); // Almacenamos el rol
       window.location.href = '/homebanking';
     } else {
       setError(data.detail || 'Algo salió mal durante el registro');
     }
   };
-  
 
   return (
     <div className="flex h-screen">
@@ -92,17 +93,13 @@ const Login = () => {
         {/* Toggle Buttons */}
         <div className="flex justify-around items-center py-4 border-b">
           <button
-            className={`text-lg font-semibold pb-2 ${
-              !isRegistering ? 'border-b-2 border-black' : 'text-gray-500'
-            }`}
+            className={`text-lg font-semibold pb-2 ${!isRegistering ? 'border-b-2 border-black' : 'text-gray-500'}`}
             onClick={() => setIsRegistering(false)}
           >
             Soy cliente
           </button>
           <button
-            className={`text-lg font-semibold pb-2 ${
-              isRegistering ? 'border-b-2 border-black' : 'text-gray-500'
-            }`}
+            className={`text-lg font-semibold pb-2 ${isRegistering ? 'border-b-2 border-black' : 'text-gray-500'}`}
             onClick={() => setIsRegistering(true)}
           >
             No soy cliente
@@ -110,10 +107,7 @@ const Login = () => {
         </div>
 
         {/* Form */}
-        <form
-          onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit}
-          className="flex flex-col justify-center items-center h-full px-8"
-        >
+        <form onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit} className="flex flex-col justify-center items-center h-full px-8">
           <h2 className="text-3xl mb-6 font-bold text-center">
             {isRegistering ? 'Registro' : 'Inicio de Sesión'}
           </h2>
@@ -122,12 +116,7 @@ const Login = () => {
           {isRegistering && (
             <>
               <div className="mb-4 w-full">
-                <label
-                  htmlFor="first_name"
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                >
-                  Nombre
-                </label>
+                <label htmlFor="first_name" className="block text-gray-700 text-sm font-bold mb-2">Nombre</label>
                 <input
                   id="first_name"
                   type="text"
@@ -138,12 +127,7 @@ const Login = () => {
                 />
               </div>
               <div className="mb-4 w-full">
-                <label
-                  htmlFor="last_name"
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                >
-                  Apellido
-                </label>
+                <label htmlFor="last_name" className="block text-gray-700 text-sm font-bold mb-2">Apellido</label>
                 <input
                   id="last_name"
                   type="text"
@@ -154,12 +138,7 @@ const Login = () => {
                 />
               </div>
               <div className="mb-4 w-full">
-                <label
-                  htmlFor="email"
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                >
-                  Email
-                </label>
+                <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -173,12 +152,7 @@ const Login = () => {
           )}
 
           <div className="mb-4 w-full">
-            <label
-              htmlFor="username"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Usuario
-            </label>
+            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">Usuario</label>
             <input
               id="username"
               type="text"
@@ -189,12 +163,7 @@ const Login = () => {
             />
           </div>
           <div className="mb-6 w-full">
-            <label
-              htmlFor="password"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Contraseña
-            </label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
             <input
               id="password"
               type="password"

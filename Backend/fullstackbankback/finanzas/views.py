@@ -66,14 +66,18 @@ class PrestamoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         usuario = self.request.user
         if usuario.es_empleado:
-            return Prestamo.objects.filter(cuenta__usuario__sucursal=usuario.sucursal)
+            return Prestamo.objects.select_related('cuenta', 'cuenta__usuario').filter(
+                cuenta__usuario__sucursal=usuario.sucursal)
         return Prestamo.objects.none()
 
     def perform_create(self, serializer):
-        cuenta = serializer.validated_data['cuenta']
-        if cuenta.usuario.sucursal != self.request.user.sucursal:
-            raise serializers.ValidationError('No puedes registrar un préstamo para un cliente de otra sucursal.')
-        serializer.save()
+        try:
+            cuenta = serializer.validated_data['cuenta']
+            if cuenta.usuario.sucursal != self.request.user.sucursal:
+                raise serializers.ValidationError('No puedes registrar un préstamo para un cliente de otra sucursal.')
+            serializer.save()
+        except KeyError as e:
+            raise serializers.ValidationError(f"Falta el campo obligatorio: {str(e)}")
 
     @action(detail=False, methods=['get'])
     def activos(self, request):
@@ -92,7 +96,8 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         prestamo = self.get_object()
         try:
             prestamo.anular()
-            return Response({'mensaje': 'Préstamo anulado'}, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(prestamo)
+            return Response({'mensaje': 'Préstamo anulado', 'prestamo': serializer.data}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

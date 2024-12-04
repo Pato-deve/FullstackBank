@@ -14,7 +14,6 @@ const Navbar: React.FC = () => {
   const [user, setUser] = useState<{ username: string; email: string } | null>(null); // Usuario logueado
   const pathname = usePathname();
 
-  // Función para obtener los datos del usuario
   const fetchUser = async () => {
     try {
       const token = Cookies.get("authToken"); // Obtiene el token del almacenamiento de cookies

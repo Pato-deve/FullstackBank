@@ -1,4 +1,5 @@
 # usuarios/views.py
+from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,7 +7,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
 from usuarios.serializers import RegistroSerializer, DetalleUsuarioSerializer
-
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -21,6 +21,7 @@ class LoginView(APIView):
             return Response({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
+                'es_empleado': user.es_empleado,
             }, status=status.HTTP_200_OK)
         else:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -53,3 +54,18 @@ class DetalleUsuarioView(APIView):
         usuario = request.user
         serializer = DetalleUsuarioSerializer(usuario)
         return Response(serializer.data)
+
+@api_view(['GET'])
+def obtener_usuario(request):
+    user = request.user
+    if not user.is_authenticated:
+        return Response({"error": "Usuario no autenticado."}, status=401)
+
+    data = {
+        "id": user.id,
+        "nombre": user.first_name,
+        "apellido": user.last_name,
+        "email": user.email,
+        "es_empleado": user.es_empleado,
+    }
+    return Response(data)
