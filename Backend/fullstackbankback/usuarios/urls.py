@@ -1,4 +1,3 @@
-# urls.py
 from django.urls import path
 from .views import LoginView, RegistroUsuarioView, DetalleUsuarioView, obtener_usuario
 

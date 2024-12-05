@@ -24,7 +24,6 @@ export default function Pagos() {
     dolares: 0,
   });
 
-  // Cargar los detalles del usuario
   useEffect(() => {
     async function fetchUsuario() {
       try {
@@ -42,7 +41,7 @@ export default function Pagos() {
         }
 
         const data = await res.json();
-        setUsuarioId(data.id); // Guardar el ID del usuario
+        setUsuarioId(data.id);
       } catch (err) {
         setError("Ocurrió un error al cargar los detalles del usuario.");
       }
@@ -51,7 +50,6 @@ export default function Pagos() {
     fetchUsuario();
   }, []);
 
-  // Cargar las cuentas del usuario
   useEffect(() => {
     if (usuarioId !== null) {
       async function fetchCuentas() {
@@ -71,11 +69,11 @@ export default function Pagos() {
 
           const data = await res.json();
           if (data.length > 0) {
-            setCuentaId(data[0].id); // Asumiendo que la cuenta del usuario es la primera
+            setCuentaId(data[0].id);
             setBalance({
               pesos: data[0].balance_pesos,
               dolares: data[0].balance_dolares,
-            }); // Asignar el balance
+            });
           } else {
             setError("No se ha encontrado la cuenta del usuario.");
           }
@@ -88,7 +86,6 @@ export default function Pagos() {
     }
   }, [usuarioId]);
 
-  // Cargar los pagos realizados
   useEffect(() => {
     if (usuarioId !== null) {
       async function fetchPagos() {
@@ -107,7 +104,6 @@ export default function Pagos() {
           }
 
           const data = await res.json();
-          // Ordenar los pagos de más reciente a más antiguo, incluyendo la hora
           const pagosOrdenados = data.sort((a: Pago, b: Pago) =>
             new Date(b.fecha_pago).getTime() - new Date(a.fecha_pago).getTime()
           );
@@ -138,9 +134,9 @@ export default function Pagos() {
         body: JSON.stringify({
           monto: parseFloat(monto),
           servicio,
-          cuenta: cuentaId, // Aquí usamos el cuentaId que hemos obtenido
-          fecha_pago: new Date().toISOString(), // Fecha y hora actual
-          estado: "pendiente", // Estado inicial como pendiente
+          cuenta: cuentaId,
+          fecha_pago: new Date().toISOString(),
+          estado: "pendiente",
         }),
       });
 
@@ -151,9 +147,8 @@ export default function Pagos() {
       }
 
       const newPago = await res.json();
-      setPagos((prev) => [newPago, ...prev]); // Insertar nuevo pago al principio de la lista
+      setPagos((prev) => [newPago, ...prev]);
 
-      // Actualizar balance después de realizar el pago
       setBalance((prevBalance) => ({
         pesos: prevBalance.pesos - parseFloat(monto),
         dolares: prevBalance.dolares,
@@ -183,7 +178,6 @@ export default function Pagos() {
 
       {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      {/* Información del balance */}
       <div className="mb-6">
         <p className="text-sm text-gray-700 mb-4">
           <strong>Balance:</strong>
@@ -193,7 +187,6 @@ export default function Pagos() {
         </p>
       </div>
 
-      {/* Lista de pagos */}
       <div className="mb-6">
         {pagos.length > 0 ? (
           <ul>
@@ -205,7 +198,7 @@ export default function Pagos() {
                 <div>
                   <p className="text-sm text-gray-700">
                     <strong>Fecha y Hora:</strong>{" "}
-                    {new Date(pago.fecha_pago).toLocaleString()} {/* Fecha y hora */}
+                    {new Date(pago.fecha_pago).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-700">
                     <strong>Servicio:</strong> {pago.servicio}
@@ -225,7 +218,6 @@ export default function Pagos() {
         )}
       </div>
 
-      {/* Botón para abrir el modal de nuevo pago */}
       <button
         onClick={handleModalOpen}
         className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -233,7 +225,6 @@ export default function Pagos() {
         Realizar Nuevo Pago
       </button>
 
-      {/* Modal para realizar un nuevo pago */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-lg w-full">

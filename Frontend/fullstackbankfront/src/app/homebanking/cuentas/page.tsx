@@ -9,13 +9,11 @@ export default function Cuentas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estado para la moneda seleccionada
   const [selectedCurrency, setSelectedCurrency] = useState<"pesos" | "dolares">("pesos");
   const [showModal, setShowModal] = useState(false);
   const [tipoCuenta, setTipoCuenta] = useState<"ahorro" | "corriente">("ahorro");
 
   useEffect(() => {
-    // Obtener las cuentas al cargar el componente
     fetchCuentas();
 
     axiosInstance
@@ -45,9 +43,8 @@ export default function Cuentas() {
     axiosInstance
       .post("/api/finanzas/cuentas/", { tipo_cuenta: tipoCuenta })
       .then(() => {
-        // Una vez creada la cuenta, recarga las cuentas
         fetchCuentas();
-        setShowModal(false); // Cerrar el modal
+        setShowModal(false);
       })
       .catch((err) => {
         setError("Error al crear la cuenta.");
@@ -70,7 +67,6 @@ export default function Cuentas() {
   return (
     <div className="px-4 py-8">
       <div className="mb-8">
-        {/* Botón de creación de cuenta */}
         {!cuentas.length && (
           <div className="flex justify-center">
             <button
@@ -82,7 +78,6 @@ export default function Cuentas() {
           </div>
         )}
 
-        {/* Mostrar la cuenta si existe */}
         {cuentas.length > 0 && (
           <div className="bg-gray-800 bg-opacity-5 p-6 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
             <h1 className="text-2xl font-bold">Cuenta {cuentas[0].numero_cuenta}</h1>
@@ -91,7 +86,6 @@ export default function Cuentas() {
         )}
       </div>
 
-      {/* Modal para seleccionar tipo de cuenta */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg max-w-sm">
@@ -130,7 +124,6 @@ export default function Cuentas() {
         </div>
       )}
 
-      {/* Botones para cambiar moneda */}
       <div className="flex justify-center gap-4 mt-4 mb-8">
         <button
           onClick={() => setSelectedCurrency("pesos")}
@@ -150,7 +143,6 @@ export default function Cuentas() {
         </button>
       </div>
 
-      {/* Movimientos en Pesos / Dólares */}
       <div className="flex flex-col items-center gap-6 mb-8">
         {selectedCurrency === "pesos" && (
           <div className="bg-gray-900 bg-opacity-90 text-white p-6 rounded-xl shadow-inner shadow-xl w-full max-w-sm">
@@ -166,7 +158,6 @@ export default function Cuentas() {
         )}
       </div>
 
-      {/* Resumen Financiero */}
       <section className="my-8 max-w-xl mx-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Resumen Financiero</h3>
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-300">
@@ -183,7 +174,6 @@ export default function Cuentas() {
         </div>
       </section>
 
-      {/* Préstamos Activos */}
       {resumenFinanciero.prestamos && (
         <section className="my-8 max-w-xl mx-auto">
           <h3 className="text-xl font-bold text-gray-800 mb-4">Préstamos Activos</h3>
@@ -201,7 +191,6 @@ export default function Cuentas() {
         </section>
       )}
 
-      {/* Transferencias Recientes */}
       {resumenFinanciero.transferencias_recientes && (
         <section className="my-8 max-w-xl mx-auto">
           <h3 className="text-xl font-bold text-gray-800 mb-4">Transferencias Recientes</h3>
@@ -219,7 +208,6 @@ export default function Cuentas() {
         </section>
       )}
 
-      {/* Pagos Recientes */}
       {resumenFinanciero.pagos_recientes && (
         <section className="my-8 max-w-xl mx-auto">
           <h3 className="text-xl font-bold text-gray-800 mb-4">Pagos Recientes</h3>

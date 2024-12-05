@@ -79,7 +79,6 @@ export default function PanelEmpleados() {
       }
 
       setSuccessMessage("El préstamo ha sido anulado correctamente.");
-      // Actualizar la lista de préstamos
       setPrestamos((prev) => prev.filter((prestamo) => prestamo.id !== prestamoId));
     } catch (err: any) {
       console.error("Error al anular el préstamo:", err.message);

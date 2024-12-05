@@ -1,4 +1,3 @@
-# usuarios/views.py
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
@@ -35,7 +34,6 @@ class RegistroUsuarioView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # Generar tokens para el usuario recién registrado
             refresh = RefreshToken.for_user(user)
             return Response({
                 'mensaje': 'Usuario registrado exitosamente',

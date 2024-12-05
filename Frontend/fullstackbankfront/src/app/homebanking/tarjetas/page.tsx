@@ -193,7 +193,6 @@ const TarjetasPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
           <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg">

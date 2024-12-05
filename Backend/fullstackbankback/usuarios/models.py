@@ -10,7 +10,8 @@ class Usuario(AbstractUser):
         on_delete=models.CASCADE,
         related_name='empleados',
         null=True,
-        blank=True
+        blank=True,
+        default=1,
     )
 
     def __str__(self):

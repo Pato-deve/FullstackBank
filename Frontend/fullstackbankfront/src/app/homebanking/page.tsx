@@ -7,7 +7,6 @@ import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMoneyBillWave, faMoneyBillTransfer, faFile, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
-// Hook para obtener el resumen financiero
 function useResumenFinanciero() {
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +38,6 @@ function useResumenFinanciero() {
   return { resumen, loading, error };
 }
 
-// Hook para obtener las últimas 3 transferencias
 function useUltimasTransferencias() {
   const [transferencias, setTransferencias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +53,7 @@ function useUltimasTransferencias() {
           },
         })
         .then((res) => {
-          setTransferencias(res.data.slice(0, 3));  // Mostrar solo las 3 últimas transferencias
+          setTransferencias(res.data.slice(0, 3));
           setLoading(false);
         })
         .catch(() => {
@@ -104,7 +102,6 @@ export default function HomeBanking() {
 
   return (
     <section className="content-wrapper py-20 px-2">
-      {/* Sección de cuentas */}
       <section className="w-full max-w-sm mx-auto">
         {balances_totales ? (
           <div className="bg-white shadow-md rounded-lg p-6">
@@ -120,7 +117,6 @@ export default function HomeBanking() {
                 </div>
               ))}
             </div>
-            {/* Mover la tarjeta aquí */}
             {primeraTarjeta ? (
               <div className="mt-8 flex justify-center">
                 <Link href="/homebanking/tarjetas">
@@ -153,7 +149,6 @@ export default function HomeBanking() {
         )}
       </section>
 
-      {/* Sección de últimas transacciones */}
       <section className="mt-12">
         <h2 className="text-xl font-semibold text-center mb-8">Tus Últimas Transacciones</h2>
         {transferencias.length > 0 ? (
@@ -173,7 +168,6 @@ export default function HomeBanking() {
         )}
       </section>
 
-      {/* Sección de préstamo */}
       <section className="mt-12">
         <Link href="/homebanking/prestamos">
           <div className="bg-gradient-to-br from-gray-700 to-gray-400 text-white p-4 rounded-lg shadow-md text-center max-h-20 max-w-sm mx-auto">
