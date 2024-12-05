@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate
 from usuarios.serializers import RegistroSerializer, DetalleUsuarioSerializer
+from usuarios.models import Usuario
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -67,3 +68,34 @@ def obtener_usuario(request):
         "es_empleado": user.es_empleado,
     }
     return Response(data)
+
+@api_view(['PUT'])
+def actualizar_direccion_usuario(request):
+    """
+    Actualiza la dirección de un usuario. El empleado puede cambiar la dirección
+    de cualquier usuario, siempre y cuando el usuario exista.
+    """
+    # Verificamos si el usuario está autenticado y es un empleado
+    if not request.user.is_authenticated or not request.user.es_empleado:
+        return Response({"error": "No tienes permisos para hacer esta acción."}, status=status.HTTP_403_FORBIDDEN)
+
+    # Obtenemos el 'username' o 'id' del usuario objetivo y la nueva dirección
+    username_or_id = request.data.get('username_or_id', None)
+    nueva_direccion = request.data.get('direccion', None)
+
+    if not username_or_id or not nueva_direccion:
+        return Response({"error": "El 'username_or_id' y la nueva dirección son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Comprobamos si el 'username_or_id' es un ID numérico o un 'username'
+    try:
+        if username_or_id.isdigit():  # Si es un ID numérico, lo buscamos por ID
+            usuario = Usuario.objects.get(id=username_or_id)
+        else:  # Si no es numérico, lo buscamos por 'username'
+            usuario = Usuario.objects.get(username=username_or_id)
+    except Usuario.DoesNotExist:
+        return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Actualizamos la dirección del usuario
+    usuario.direccion = nueva_direccion
+    usuario.save()
+    return Response({"mensaje": "Dirección actualizada con éxito."}, status=status.HTTP_200_OK)
