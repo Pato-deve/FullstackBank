@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 from .models import Cuenta, Tarjeta, Transferencia, Prestamo, Servicios
 from .serializers import CuentaSerializer, TarjetaSerializer, TransferenciaSerializer, PrestamoSerializer, ServiciosSerializer
 from sucursales.permissions import EsEmpleado
+from usuarios.models import Usuario
+from django.db import transaction
 
 
 class CuentaViewSet(viewsets.ModelViewSet):
@@ -45,18 +47,61 @@ class TarjetaViewSet(viewsets.ModelViewSet):
 
 
 class TransferenciaViewSet(viewsets.ModelViewSet):
+    queryset = Transferencia.objects.all()
     serializer_class = TransferenciaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        usuario = self.request.user
-        return Transferencia.objects.filter(cuenta_origen__usuario=usuario).order_by('-fecha')
+    def create(self, request, *args, **kwargs):
+        destinatario = request.data.get("destinatario")
+        monto = request.data.get("monto")
+        descripcion = request.data.get("descripcion")
 
-    def perform_create(self, serializer):
-        cuenta_origen = serializer.validated_data['cuenta_origen']
-        if cuenta_origen.usuario != self.request.user:
-            raise serializer.ValidationError('No tienes permiso para usar esta cuenta como origen.')
-        serializer.save()
+        if not destinatario or not monto:
+            return Response({"error": "El destinatario y el monto son obligatorios"}, status=status.HTTP_400_BAD_REQUEST)
+
+        cuenta_destino = None
+        try:
+            if '-' in destinatario:
+                cuenta_destino = Cuenta.objects.get(numero_cuenta=destinatario)
+            else:
+                usuario_destino = Usuario.objects.get(username=destinatario)
+                cuenta_destino = Cuenta.objects.get(usuario=usuario_destino)
+        except (Cuenta.DoesNotExist, Usuario.DoesNotExist):
+            return Response({"error": "Destinatario no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+
+        cuenta_origen = Cuenta.objects.get(usuario=request.user)
+        if cuenta_origen.balance_pesos < monto:
+            return Response({"error": "Saldo insuficiente"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                transferencia = Transferencia.objects.create(
+                    cuenta_origen=cuenta_origen,
+                    cuenta_destino=cuenta_destino,
+                    monto=monto,
+                    descripcion=descripcion,
+                    username_emisor=request.user.username
+                )
+
+                cuenta_origen.balance_pesos -= monto
+                cuenta_origen.save()
+
+                cuenta_destino.balance_pesos += monto
+                cuenta_destino.save()
+
+                username_receptor = cuenta_destino.usuario.username
+
+                transferencia.username_receptor = username_receptor
+                transferencia.save()
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = TransferenciaSerializer(transferencia)
+
+        transferencia_data = serializer.data
+        transferencia_data["username_receptor"] = username_receptor
+
+        return Response(transferencia_data, status=status.HTTP_201_CREATED)
 
 class EsEmpleadoOUsuarioPropio(BasePermission):
     # acceso si es empleado o si es el usuario dueño del préstamo.

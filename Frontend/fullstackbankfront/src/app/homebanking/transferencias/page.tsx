@@ -1,42 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-interface Usuario {
-  id: string;
-  nombre: string;
-  apellido: string;
+interface Cuenta {
+  id: number;
+  balance_pesos: number;
+  balance_dolares: number;
 }
 
 interface Transferencia {
-  id: string;
-  destinatario: string;
   monto: number;
   descripcion: string;
   fecha: string;
+  cuenta_destino: string;
+  cuenta_origen: string;
+  username_emisor: string;
+  username_receptor: string;
 }
 
 export default function Transferencias() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [transferencias, setTransferencias] = useState<Transferencia[]>([]);
-  const [monto, setMonto] = useState<string>("");
-  const [destinatario, setDestinatario] = useState<string>("");
-  const [descripcion, setDescripcion] = useState<string>("");
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [cuentaId, setCuentaId] = useState<number | null>(null);
+  const [balance, setBalance] = useState<{ pesos: number; dolares: number }>({
+    pesos: 0,
+    dolares: 0,
+  });
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [showForm, setShowForm] = useState<boolean>(false);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [selectedTransferencia, setSelectedTransferencia] = useState<Transferencia | null>(null);
+  const [destinatario, setDestinatario] = useState<string>("");
+  const [monto, setMonto] = useState<string>("");
+  const [descripcion, setDescripcion] = useState<string>("");
+  const [transferencias, setTransferencias] = useState<Transferencia[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [usernameLogueado, setUsernameLogueado] = useState<string>("");
 
-  // Cargar transferencias realizadas y usuarios al cargar la página
   useEffect(() => {
-    async function fetchData() {
+    async function fetchUsuario() {
       try {
         const token = localStorage.getItem("authToken");
-
-        // Cargar transferencias
-        const resTransferencias = await fetch("/api/transferencias", {
+        const res = await fetch("http://localhost:8000/api/usuarios/detalle/", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -44,45 +45,92 @@ export default function Transferencias() {
           },
         });
 
-        if (!resTransferencias.ok) {
-          throw new Error("Error al cargar las transferencias.");
+        if (!res.ok) {
+          throw new Error("Error al cargar los detalles del usuario.");
         }
 
-        const dataTransferencias = (await resTransferencias.json()) as Transferencia[];
-        setTransferencias(dataTransferencias);
-
-        // Cargar usuarios
-        const resUsuarios = await fetch("/api/usuarios", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!resUsuarios.ok) {
-          throw new Error("Error al cargar los usuarios.");
-        }
-
-        const dataUsuarios = (await resUsuarios.json()) as Usuario[];
-        setUsuarios(dataUsuarios);
+        const data = await res.json();
+        setUsuarioId(data.id);
+        setUsernameLogueado(data.username);
       } catch (err) {
-        setError("Ocurrió un error al cargar los datos.");
+        setError("Ocurrió un error al cargar los detalles del usuario.");
       }
     }
 
-    fetchData();
+    fetchUsuario();
   }, []);
+
+  useEffect(() => {
+    if (usuarioId !== null) {
+      async function fetchCuentas() {
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch("http://localhost:8000/api/finanzas/cuentas/", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!res.ok) {
+            throw new Error("Error al cargar las cuentas.");
+          }
+
+          const data = await res.json();
+          if (data.length > 0) {
+            setCuentaId(data[0].id);
+            setBalance({
+              pesos: data[0].balance_pesos,
+              dolares: data[0].balance_dolares,
+            });
+          } else {
+            setError("No se ha encontrado la cuenta del usuario.");
+          }
+        } catch (err) {
+          setError("Ocurrió un error al cargar las cuentas.");
+        }
+      }
+
+      fetchCuentas();
+    }
+  }, [usuarioId]);
+
+  useEffect(() => {
+    if (usuarioId !== null) {
+      async function fetchTransferencias() {
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch(`http://localhost:8000/api/finanzas/transferencias/`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!res.ok) {
+            throw new Error("Error al cargar las transferencias.");
+          }
+
+          const data = await res.json();
+          setTransferencias(data.reverse());
+        } catch (err) {
+          setError("Ocurrió un error al cargar las transferencias.");
+        }
+      }
+
+      fetchTransferencias();
+    }
+  }, [usuarioId]);
 
   const handleTransferencia = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
-    setLoading(true);
 
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch("/api/transferencias", {
+      const res = await fetch("http://localhost:8000/api/finanzas/transferencias/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,8 +138,9 @@ export default function Transferencias() {
         },
         body: JSON.stringify({
           monto: parseFloat(monto),
-          destinatarioId: destinatario,
-          descripcion,
+          descripcion: descripcion,
+          destinatario: destinatario,
+          cuenta_origen: cuentaId,
         }),
       });
 
@@ -101,152 +150,145 @@ export default function Transferencias() {
         return;
       }
 
-      const newTransferencia = await res.json();
-      setSuccessMessage("¡Transferencia realizada con éxito!");
-      setTransferencias((prev) => [newTransferencia, ...prev]);
+      setBalance((prevBalance) => ({
+        pesos: prevBalance.pesos - parseFloat(monto), // Restamos del balance
+        dolares: prevBalance.dolares,
+      }));
+
       setMonto("");
       setDestinatario("");
       setDescripcion("");
-      setShowModal(false); // Cerrar el modal después de enviar la transferencia
+      setIsModalOpen(false);
+
+      const resTransferencias = await fetch(`http://localhost:8000/api/finanzas/transferencias/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const dataTransferencias = await resTransferencias.json();
+      setTransferencias(dataTransferencias.reverse());
     } catch (err) {
       setError("Ocurrió un error al procesar la transferencia.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleModalOpen = () => {
-    setShowModal(true);
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-  };
-
-  const handleModalDetailsOpen = (transferencia: Transferencia) => {
-    setSelectedTransferencia(transferencia);
-    setShowModal(true);
+  const formatFecha = (fecha: string) => {
+    const date = new Date(fecha);
+    return date.toLocaleString("es-AR", {
+      weekday: "short",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    });
   };
 
   return (
     <div className="max-w-2xl mx-auto bg-white shadow-md rounded-lg overflow-hidden p-6">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Mis Transferencias</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">Transferencias</h2>
 
       {error && <div className="text-red-500 mb-4">{error}</div>}
-      {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
 
-      {/* Lista de transferencias */}
       <div className="mb-6">
-        {transferencias.length > 0 ? (
-          <ul>
-            {transferencias.map((transferencia) => (
-              <li
-                key={transferencia.id}
-                className="border-b border-gray-200 py-2 flex justify-between items-center"
-              >
-                <div>
-                  <p className="text-sm text-gray-700">
-                    <strong>Destinatario:</strong> {transferencia.destinatario}
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    <strong>Monto:</strong> ${transferencia.monto.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    <strong>Fecha:</strong> {new Date(transferencia.fecha).toLocaleDateString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleModalDetailsOpen(transferencia)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  Ver Detalles
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500">No has realizado transferencias aún.</p>
-        )}
+        <p className="text-sm text-gray-700 mb-4">
+          <strong>Balance:</strong>{" "}
+          {balance.pesos
+            ? new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(balance.pesos)
+            : "$0"}
+        </p>
       </div>
 
-      {/* Botón para abrir el modal de nueva transferencia */}
-      <button
-        onClick={handleModalOpen}
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            <button
+        onClick={() => setIsModalOpen(true)}
+        className="bg-blue-500 text-white px-4 py-2 rounded-md mb-4"
       >
-        Realizar Nueva Transferencia
+        Realizar Transferencia
       </button>
 
-      {/* Modal para realizar una nueva transferencia */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-lg w-full">
-            <h3 className="text-xl font-semibold mb-4">Nueva Transferencia</h3>
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-4">Transferencias realizadas</h3>
+        <ul>
+          {transferencias.map((transferencia, index) => (
+            <li key={index} className="mb-4 p-4 bg-gray-100 rounded-lg">
+              <p><strong>Tipo:</strong> {transferencia.cuenta_origen === cuentaId ? "Enviada" : "Recibida"}</p>
+
+              <p><strong>Emisor:</strong> {transferencia.cuenta_origen === cuentaId ? usernameLogueado : transferencia.username_emisor}</p>
+
+              <p><strong>Destinatario:</strong> {transferencia.cuenta_origen === cuentaId ? transferencia.username_receptor : usernameLogueado}</p>
+
+              <p><strong>Monto:</strong> {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(transferencia.monto)}</p>
+              <p><strong>Fecha:</strong> {formatFecha(transferencia.fecha)}</p>
+              {transferencia.descripcion && <p><strong>Descripción:</strong> {transferencia.descripcion}</p>}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Realizar Transferencia</h3>
             <form onSubmit={handleTransferencia}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="destinatario" className="block text-sm font-semibold text-gray-700">
+                  Destinatario (Username o Número de cuenta)
+                </label>
+                <input
+                  type="text"
+                  id="destinatario"
+                  value={destinatario}
+                  onChange={(e) => setDestinatario(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="monto" className="block text-sm font-semibold text-gray-700">
                   Monto
                 </label>
                 <input
                   type="number"
-                  step="0.01"
-                  min="0"
+                  id="monto"
                   value={monto}
                   onChange={(e) => setMonto(e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
                   required
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Destinatario
-                </label>
-                <select
-                  value={destinatario}
-                  onChange={(e) => setDestinatario(e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded"
-                  required
-                >
-                  <option value="" disabled>
-                    Seleccione un destinatario
-                  </option>
-                  {usuarios.map((usuario) => (
-                    <option key={usuario.id} value={usuario.id}>
-                      {usuario.nombre} {usuario.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="descripcion" className="block text-sm font-semibold text-gray-700">
                   Descripción (opcional)
                 </label>
                 <textarea
+                  id="descripcion"
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded"
-                />
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                ></textarea>
               </div>
 
-              <button
-                type="submit"
-                className={`w-full px-4 py-2 text-white rounded ${
-                  loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-                }`}
-                disabled={loading}
-              >
-                {loading ? "Procesando..." : "Enviar Transferencia"}
-              </button>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                >
+                  Transferir
+                </button>
+              </div>
             </form>
-
-            <button
-              onClick={handleModalClose}
-              className="mt-4 w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              Cerrar
-            </button>
           </div>
         </div>
       )}
