@@ -5,11 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-regular-svg-icons";
+import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons"; // Importar el ícono
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [user, setUser] = useState<{ username: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ username: string; email: string; direccion: string } | null>(null);
   const [isEmpleado, setIsEmpleado] = useState(false); // Estado para empleados
   const pathname = usePathname();
 
@@ -33,6 +33,7 @@ const Navbar: React.FC = () => {
       setUser({
         username: data.first_name,
         email: data.email,
+        direccion: data.direccion || null,
       });
 
       const empleadoStatus = localStorage.getItem("isEmpleado") === "true";
@@ -88,19 +89,27 @@ const Navbar: React.FC = () => {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="text-xl hover:text-white"
             >
-              <FontAwesomeIcon icon={faUser} className="w-8 h-8 text-gray-400" />
+              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-8 h-8 text-gray-400" />
             </button>
             <div
-              className={`absolute ${
-                isDropdownOpen ? "block" : "hidden"
-              } top-full mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50`}
+              className={`absolute ${isDropdownOpen ? "block" : "hidden"} top-full mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50`}
             >
               {user ? (
                 <>
                   <div className="px-4 py-2 text-sm">
                     <p>{user.username}</p>
                     <p className="text-gray-400">{user.email}</p>
+                    <p className="text-gray-400 mt-2">{user.direccion}</p>
                   </div>
+
+                  {/* El ícono ahora está solo en el enlace "Cambiar dirección" */}
+                  <Link
+                    href="/homebanking/direcciones"
+                    className="flex items-center px-4 py-2 text-sm text-blue-500 hover:bg-gray-700"
+                  >
+                    Cambiar dirección <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="mr-2" /> 
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
@@ -134,32 +143,26 @@ const Navbar: React.FC = () => {
               className="flex items-center space-x-2 text-sm hover:text-white"
             >
               <span>{user?.username || "Usuario"}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="w-4 h-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
             </button>
             <div
-              className={`absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg ${
-                isDropdownOpen ? "block" : "hidden"
-              }`}
+              className={`absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg ${isDropdownOpen ? "block" : "hidden"}`}
             >
               {user ? (
                 <>
                   <div className="px-4 py-2 text-sm">
                     <p>{user.username}</p>
                     <p className="text-gray-400">{user.email}</p>
+                    <p className="text-gray-400 mt-2">{user.direccion}</p>
                   </div>
+
+                  {/* Ícono solo en el enlace "Cambiar dirección" */}
+                  <Link
+                    href="/homebanking/direcciones"
+                    className="flex items-center px-4 py-2 text-sm text-blue-500 hover:bg-gray-700"
+                  >
+                    Cambiar dirección <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="mr-2" /> 
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
