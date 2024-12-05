@@ -46,18 +46,62 @@ function useUltimasTransferencias() {
   useEffect(() => {
     const token = Cookies.get("authToken");
     if (token) {
+      // Primero obtenemos el usuario autenticado
       axiosInstance
-        .get("http://localhost:8000/api/finanzas/transferencias/", {
+        .get("http://localhost:8000/api/usuarios/detalle/", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         .then((res) => {
-          setTransferencias(res.data.slice(0, 3));
-          setLoading(false);
+          const usuarioId = res.data.id; // Obtenemos el ID del usuario logueado
+          
+          // Luego obtenemos todas las cuentas asociadas al usuario
+          axiosInstance
+            .get("http://localhost:8000/api/finanzas/cuentas/", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((res) => {
+              const cuentas = res.data;
+
+              // Filtramos las transferencias por las cuentas asociadas al usuario
+              axiosInstance
+                .get("http://localhost:8000/api/finanzas/transferencias/", {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                })
+                .then((res) => {
+                  // Filtramos las transferencias que involucren las cuentas del usuario
+                  const transferenciasFiltradas = res.data.filter((transferencia) => 
+                    cuentas.some((cuenta) => 
+                      cuenta.id === transferencia.cuenta_origen || cuenta.id === transferencia.cuenta_destino
+                    )
+                  );
+
+                  // Ordenamos las transferencias por fecha de forma descendente (de más nueva a más vieja)
+                  const transferenciasOrdenadas = transferenciasFiltradas.sort(
+                    (a, b) => new Date(b.fecha) - new Date(a.fecha)
+                  );
+
+                  // Tomamos las 3 últimas transferencias
+                  setTransferencias(transferenciasOrdenadas.slice(0, 3));
+                  setLoading(false);
+                })
+                .catch(() => {
+                  setError("No se pudieron cargar las transferencias.");
+                  setLoading(false);
+                });
+            })
+            .catch(() => {
+              setError("No se pudieron obtener las cuentas del usuario.");
+              setLoading(false);
+            });
         })
         .catch(() => {
-          setError("No se pudieron cargar las transferencias.");
+          setError("No se pudo obtener los detalles del usuario.");
           setLoading(false);
         });
     } else {
@@ -153,14 +197,18 @@ export default function HomeBanking() {
         <h2 className="text-xl font-semibold text-center mb-8">Tus Últimas Transacciones</h2>
         {transferencias.length > 0 ? (
           <div className="flex justify-center w-full">
-          <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
-            {transferencias.map((transferencia, index) => (
-              <div key={index} className="border-b py-3">
-                <p className="text-gray-600 text-sm">Fecha: {transferencia.fecha}</p>
-                <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
-                <p className="text-gray-600 text-sm">Destinatario: {transferencia.destinatario}</p>
-              </div>
-            ))}
+            <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
+              {transferencias.map((transferencia, index) => (
+                <div key={index} className="border-b py-3">
+                  <p className="text-gray-600 text-sm">Fecha: {new Date(transferencia.fecha).toLocaleDateString()}</p>
+                  <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
+                </div>
+              ))}
+              <Link href="/homebanking/transferencias">
+                <button className="text-blue-500 font-semibold hover:text-blue-700">
+                  Ver Más
+                </button>
+              </Link>
             </div>
           </div>
         ) : (
