@@ -15,6 +15,7 @@ type Prestamo = {
 
 export default function PanelEmpleados() {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [sucursal, setSucursal] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -32,22 +33,37 @@ export default function PanelEmpleados() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/api/finanzas/prestamos/", {
+      const userResponse = await fetch("http://localhost:8000/api/usuarios/detalle/", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        throw new Error(errorData.error || "Error al obtener los datos del empleado.");
+      }
+
+      const userData = await userResponse.json();
+      setSucursal(userData.sucursal?.nombre || "Sin sucursal");
+
+      const prestamosResponse = await fetch("http://localhost:8000/api/finanzas/prestamos/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!prestamosResponse.ok) {
+        const errorData = await prestamosResponse.json();
         throw new Error(errorData.error || "Error al obtener los préstamos.");
       }
 
-      const data = await res.json();
-      setPrestamos(data);
+      const prestamosData = await prestamosResponse.json();
+      setPrestamos(prestamosData);
     } catch (err: any) {
-      console.error("Error al obtener los préstamos:", err.message);
+      console.error("Error:", err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -92,7 +108,9 @@ export default function PanelEmpleados() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Panel de Empleados - Gestión de Préstamos</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        Panel de Empleados -  {sucursal || "Cargando..."}
+      </h1>
 
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>}
       {successMessage && <div className="bg-green-100 text-green-700 p-4 rounded mb-4">{successMessage}</div>}
