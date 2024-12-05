@@ -46,21 +46,62 @@ function useUltimasTransferencias() {
   useEffect(() => {
     const token = Cookies.get("authToken");
     if (token) {
+      // Primero obtenemos el usuario autenticado
       axiosInstance
-        .get("http://localhost:8000/api/finanzas/transferencias/", {
+        .get("http://localhost:8000/api/usuarios/detalle/", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         .then((res) => {
-          // Ordenamos las transferencias por fecha de forma descendente (de más nueva a más vieja)
-          const transferenciasOrdenadas = res.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-          // Tomamos las 3 primeras transferencias
-          setTransferencias(transferenciasOrdenadas.slice(0, 3));
-          setLoading(false);
+          const usuarioId = res.data.id; // Obtenemos el ID del usuario logueado
+          
+          // Luego obtenemos todas las cuentas asociadas al usuario
+          axiosInstance
+            .get("http://localhost:8000/api/finanzas/cuentas/", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((res) => {
+              const cuentas = res.data;
+
+              // Filtramos las transferencias por las cuentas asociadas al usuario
+              axiosInstance
+                .get("http://localhost:8000/api/finanzas/transferencias/", {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                })
+                .then((res) => {
+                  // Filtramos las transferencias que involucren las cuentas del usuario
+                  const transferenciasFiltradas = res.data.filter((transferencia) => 
+                    cuentas.some((cuenta) => 
+                      cuenta.id === transferencia.cuenta_origen || cuenta.id === transferencia.cuenta_destino
+                    )
+                  );
+
+                  // Ordenamos las transferencias por fecha de forma descendente (de más nueva a más vieja)
+                  const transferenciasOrdenadas = transferenciasFiltradas.sort(
+                    (a, b) => new Date(b.fecha) - new Date(a.fecha)
+                  );
+
+                  // Tomamos las 3 últimas transferencias
+                  setTransferencias(transferenciasOrdenadas.slice(0, 3));
+                  setLoading(false);
+                })
+                .catch(() => {
+                  setError("No se pudieron cargar las transferencias.");
+                  setLoading(false);
+                });
+            })
+            .catch(() => {
+              setError("No se pudieron obtener las cuentas del usuario.");
+              setLoading(false);
+            });
         })
         .catch(() => {
-          setError("No se pudieron cargar las transferencias.");
+          setError("No se pudo obtener los detalles del usuario.");
           setLoading(false);
         });
     } else {
