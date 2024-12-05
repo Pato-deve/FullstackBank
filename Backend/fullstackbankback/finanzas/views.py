@@ -113,6 +113,7 @@ class TransferenciaViewSet(viewsets.ModelViewSet):
 
         return Response(transferencia_data, status=status.HTTP_201_CREATED)
 
+
 class EsEmpleadoOUsuarioPropio(BasePermission):
     # acceso si es empleado o si es el usuario dueño del préstamo.
     def has_permission(self, request, view):
@@ -122,6 +123,7 @@ class EsEmpleadoOUsuarioPropio(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user == obj.cuenta.usuario or (request.user.es_empleado if hasattr(request.user, 'es_empleado') else False)
+
 
 class PrestamoViewSet(viewsets.ModelViewSet):
     serializer_class = PrestamoSerializer
@@ -138,31 +140,53 @@ class PrestamoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save()
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, EsEmpleado])
+    def aprobar(self, request, pk=None):
+        prestamo = self.get_object()
+        if prestamo.estado != 'pendiente':
+            return Response({"error": "Solo se pueden aprobar préstamos pendientes."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            prestamo.aprobar()
+            serializer = self.get_serializer(prestamo)
+            return Response({'mensaje': 'Préstamo aprobado correctamente.', 'prestamo': serializer.data}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, EsEmpleado])
+    def rechazar(self, request, pk=None):
+        prestamo = self.get_object()
+        if prestamo.estado != 'pendiente':
+            return Response({"error": "Solo se pueden rechazar préstamos pendientes."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            prestamo.rechazar()
+            serializer = self.get_serializer(prestamo)
+            return Response({'mensaje': 'Préstamo rechazado correctamente.', 'prestamo': serializer.data}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, EsEmpleado])
+    def anular(self, request, pk=None):
+        prestamo = self.get_object()
+        if prestamo.estado != 'aprobado':
+            return Response({"error": "Solo se pueden anular préstamos aprobados."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            prestamo.anular()
+            serializer = self.get_serializer(prestamo)
+            return Response({'mensaje': 'Préstamo anulado correctamente.', 'prestamo': serializer.data}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, EsEmpleado])
     def activos(self, request):
-        # Solo empleados
-        prestamos_activos = self.get_queryset().filter(estado='activo')
+        prestamos_activos = self.get_queryset().filter(estado='aprobado')
         serializer = self.get_serializer(prestamos_activos, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, EsEmpleado])
-    def pagados(self, request):
-        # Solo empleados
-        prestamos_pagados = self.get_queryset().filter(estado='pagado')
-        serializer = self.get_serializer(prestamos_pagados, many=True)
+    def pendientes(self, request):
+        prestamos_pendientes = self.get_queryset().filter(estado='pendiente')
+        serializer = self.get_serializer(prestamos_pendientes, many=True)
         return Response(serializer.data)
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, EsEmpleado])
-    def anular(self, request, pk=None):
-        # Solo empleados
-        prestamo = self.get_object()
-        try:
-            prestamo.anular()
-            serializer = self.get_serializer(prestamo)
-            return Response({'mensaje': 'Préstamo anulado', 'prestamo': serializer.data}, status=status.HTTP_200_OK)
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PagoViewSet(viewsets.ModelViewSet):
@@ -198,7 +222,7 @@ class ResumenFinancieroView(APIView):
         balance_pesos = sum(cuenta.balance_pesos for cuenta in cuentas)
         balance_dolares = sum(cuenta.balance_dolares for cuenta in cuentas)
 
-        prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='activo')
+        prestamos_activos = Prestamo.objects.filter(cuenta__usuario=usuario, estado='aprobado')
         total_pendiente = sum(prestamo.pago_total for prestamo in prestamos_activos)
         proxima_cuota = sum(prestamo.cuota_mensual for prestamo in prestamos_activos)
 

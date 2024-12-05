@@ -71,7 +71,7 @@ export default function PanelEmpleados() {
     }
   };
 
-  const anularPrestamo = async (prestamoId: number) => {
+  const actualizarPrestamo = async (prestamoId: number, accion: "anular" | "rechazar" | "aprobar") => {
     setError(null);
     setSuccessMessage(null);
 
@@ -83,7 +83,7 @@ export default function PanelEmpleados() {
     }
 
     try {
-      const res = await fetch(`http://localhost:8000/api/finanzas/prestamos/${prestamoId}/anular/`, {
+      const res = await fetch(`http://localhost:8000/api/finanzas/prestamos/${prestamoId}/${accion}/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -92,13 +92,16 @@ export default function PanelEmpleados() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Error al anular el préstamo.");
+        throw new Error(errorData.error || `Error al realizar la acción: ${accion}.`);
       }
 
-      setSuccessMessage("El préstamo ha sido anulado correctamente.");
-      setPrestamos((prev) => prev.filter((prestamo) => prestamo.id !== prestamoId));
+      const updatedPrestamo = await res.json();
+      setSuccessMessage(`El préstamo ha sido ${accion === "aprobar" ? "aprobado" : accion} correctamente.`);
+      setPrestamos((prev) =>
+        prev.map((prestamo) => (prestamo.id === updatedPrestamo.prestamo.id ? updatedPrestamo.prestamo : prestamo))
+      );
     } catch (err: any) {
-      console.error("Error al anular el préstamo:", err.message);
+      console.error(`Error al realizar la acción: ${accion}`, err.message);
       setError(err.message);
     }
   };
@@ -107,14 +110,29 @@ export default function PanelEmpleados() {
     fetchPrestamos();
   }, []);
 
+  const getEstadoColor = (estado: string) => {
+    switch (estado) {
+      case "pendiente":
+        return "bg-yellow-100 text-yellow-800";
+      case "aprobado":
+        return "bg-green-100 text-green-800";
+      case "rechazado":
+        return "bg-red-100 text-red-800";
+      case "anulado":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Panel de Empleados -  {sucursal || "Cargando..."}
+        Panel de Empleados - {sucursal || "Cargando..."}
       </h1>
-      <Link href="/homebanking/empleados/findTarjeta">Buscar tarjetas de un usuario</Link> <br>
-      </br>
-      <Link href="/homebanking/empleados/changeDir">Cambiar direccion de un usuario</Link>
+      <Link href="/homebanking/empleados/findTarjeta" className="text-blue-500 hover:underline">
+        Buscar tarjetas de un usuario
+      </Link>
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>}
       {successMessage && <div className="bg-green-100 text-green-700 p-4 rounded mb-4">{successMessage}</div>}
 
@@ -130,7 +148,8 @@ export default function PanelEmpleados() {
                     <p className="text-gray-800 font-medium">Préstamo #{prestamo.id}</p>
                     <p className="text-gray-500 text-sm">
                       <strong>Monto:</strong> ${parseFloat(prestamo.monto_prestado).toFixed(2)} |
-                      <strong> Estado:</strong> {prestamo.estado} |
+                      <strong> Estado:</strong>{" "}
+                      <span className={`px-2 py-1 rounded ${getEstadoColor(prestamo.estado)}`}>{prestamo.estado}</span> |
                       <strong> Meses:</strong> {prestamo.meses_duracion}
                     </p>
                     <p className="text-gray-500 text-sm">
@@ -138,9 +157,25 @@ export default function PanelEmpleados() {
                       <strong> Cuota Mensual:</strong> ${parseFloat(prestamo.cuota_mensual).toFixed(2)}
                     </p>
                   </div>
-                  {prestamo.estado === "activo" && (
+                  {prestamo.estado === "pendiente" && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => actualizarPrestamo(prestamo.id, "aprobar")}
+                        className="px-4 py-2 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                      >
+                        Aprobar
+                      </button>
+                      <button
+                        onClick={() => actualizarPrestamo(prestamo.id, "rechazar")}
+                        className="px-4 py-2 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  )}
+                  {prestamo.estado === "aprobado" && (
                     <button
-                      onClick={() => anularPrestamo(prestamo.id)}
+                      onClick={() => actualizarPrestamo(prestamo.id, "anular")}
                       className="px-4 py-2 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                     >
                       Anular
