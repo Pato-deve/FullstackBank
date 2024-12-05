@@ -23,3 +23,5 @@ class DetalleUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+

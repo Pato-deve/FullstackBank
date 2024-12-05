@@ -68,10 +68,18 @@ class PrestamoSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'pago_total', 'cuota_mensual', 'estado']
 
     def validate(self, data):
+        user = self.context['request'].user
+        cuenta = data.get('cuenta')
+
+        if cuenta and cuenta.usuario != user:
+            raise serializers.ValidationError("No puedes crear un préstamo para una cuenta que no te pertenece.")
+
         if data['monto_prestado'] <= 0:
             raise serializers.ValidationError("El monto debe ser mayor a $0.")
+
         if data['meses_duracion'] <= 0 or data['meses_duracion'] > 60:
             raise serializers.ValidationError("La duración debe estar entre 1 y 60 meses.")
+
         return data
 
     def create(self, validated_data):
@@ -94,6 +102,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
             cuota_mensual=cuota_mensual,
             meses_duracion=meses,
         )
+
 
 class ServiciosSerializer(serializers.ModelSerializer):
     class Meta:

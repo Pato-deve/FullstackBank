@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets, permissions, serializers, status
@@ -58,41 +58,49 @@ class TransferenciaViewSet(viewsets.ModelViewSet):
             raise serializer.ValidationError('No tienes permiso para usar esta cuenta como origen.')
         serializer.save()
 
+class EsEmpleadoOUsuarioPropio(BasePermission):
+    # acceso si es empleado o si es el usuario dueño del préstamo.
+    def has_permission(self, request, view):
+        if hasattr(request.user, 'es_empleado') and request.user.es_empleado:
+            return True
+        return view.action in ['list', 'retrieve', 'create']
+
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.cuenta.usuario or (request.user.es_empleado if hasattr(request.user, 'es_empleado') else False)
 
 class PrestamoViewSet(viewsets.ModelViewSet):
     serializer_class = PrestamoSerializer
-    permission_classes = [IsAuthenticated, EsEmpleado]
+    permission_classes = [IsAuthenticated, EsEmpleadoOUsuarioPropio]
 
     def get_queryset(self):
-        usuario = self.request.user
-        if usuario.es_empleado:
+        user = self.request.user
+        if user.es_empleado:
             return Prestamo.objects.select_related('cuenta', 'cuenta__usuario').filter(
-                cuenta__usuario__sucursal=usuario.sucursal)
-        return Prestamo.objects.none()
+                cuenta__usuario__sucursal=user.sucursal
+            )
+        return Prestamo.objects.filter(cuenta__usuario=user)
 
     def perform_create(self, serializer):
-        try:
-            cuenta = serializer.validated_data['cuenta']
-            if cuenta.usuario.sucursal != self.request.user.sucursal:
-                raise serializers.ValidationError('No puedes registrar un préstamo para un cliente de otra sucursal.')
-            serializer.save()
-        except KeyError as e:
-            raise serializers.ValidationError(f"Falta el campo obligatorio: {str(e)}")
+        serializer.save()
 
-    @action(detail=False, methods=['get'])
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, EsEmpleado])
     def activos(self, request):
+        # Solo empleados
         prestamos_activos = self.get_queryset().filter(estado='activo')
         serializer = self.get_serializer(prestamos_activos, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, EsEmpleado])
     def pagados(self, request):
+        # Solo empleados
         prestamos_pagados = self.get_queryset().filter(estado='pagado')
         serializer = self.get_serializer(prestamos_pagados, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, EsEmpleado])
     def anular(self, request, pk=None):
+        # Solo empleados
         prestamo = self.get_object()
         try:
             prestamo.anular()
