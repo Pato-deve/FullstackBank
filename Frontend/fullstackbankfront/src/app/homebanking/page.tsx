@@ -53,7 +53,10 @@ function useUltimasTransferencias() {
           },
         })
         .then((res) => {
-          setTransferencias(res.data.slice(0, 3));
+          // Ordenamos las transferencias por fecha de forma descendente (de más nueva a más vieja)
+          const transferenciasOrdenadas = res.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+          // Tomamos las 3 primeras transferencias
+          setTransferencias(transferenciasOrdenadas.slice(0, 3));
           setLoading(false);
         })
         .catch(() => {
@@ -153,14 +156,18 @@ export default function HomeBanking() {
         <h2 className="text-xl font-semibold text-center mb-8">Tus Últimas Transacciones</h2>
         {transferencias.length > 0 ? (
           <div className="flex justify-center w-full">
-          <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
-            {transferencias.map((transferencia, index) => (
-              <div key={index} className="border-b py-3">
-                <p className="text-gray-600 text-sm">Fecha: {transferencia.fecha}</p>
-                <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
-                <p className="text-gray-600 text-sm">Destinatario: {transferencia.destinatario}</p>
-              </div>
-            ))}
+            <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
+              {transferencias.map((transferencia, index) => (
+                <div key={index} className="border-b py-3">
+                  <p className="text-gray-600 text-sm">Fecha: {new Date(transferencia.fecha).toLocaleDateString()}</p>
+                  <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
+                </div>
+              ))}
+              <Link href="/homebanking/transferencias">
+                <button className="text-blue-500 font-semibold hover:text-blue-700">
+                  Ver Más
+                </button>
+              </Link>
             </div>
           </div>
         ) : (
