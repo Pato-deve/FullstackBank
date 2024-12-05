@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Sucursal
 from .serializers import SucursalSerializer
-from .permissions import EsEmpleado
+from rest_framework.permissions import AllowAny
 from usuarios.models import Usuario
 
 class SucursalViewSet(viewsets.ModelViewSet):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
-    permission_classes = [IsAuthenticated, EsEmpleado]
+    permission_classes = [AllowAny]  # Permitir acceso público a la lista de sucursales
 
 class EmpleadosDeSucursalView(APIView):
     def get(self, request, pk):
