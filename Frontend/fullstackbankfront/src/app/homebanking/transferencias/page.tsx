@@ -101,7 +101,7 @@ export default function Transferencias() {
       async function fetchTransferencias() {
         try {
           const token = localStorage.getItem("authToken");
-          const res = await fetch(`http://localhost:8000/api/finanzas/transferencias/`, {
+          const res = await fetch("http://localhost:8000/api/finanzas/transferencias/", {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -114,7 +114,10 @@ export default function Transferencias() {
           }
 
           const data = await res.json();
-          setTransferencias(data.reverse());
+          const transferenciasFiltradas = data.filter((transferencia: Transferencia) => 
+            transferencia.cuenta_origen === cuentaId || transferencia.cuenta_destino === cuentaId
+          );
+          setTransferencias(transferenciasFiltradas.reverse());
         } catch (err) {
           setError("Ocurrió un error al cargar las transferencias.");
         }
@@ -122,7 +125,7 @@ export default function Transferencias() {
 
       fetchTransferencias();
     }
-  }, [usuarioId]);
+  }, [usuarioId, cuentaId]);
 
   const handleTransferencia = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -160,7 +163,7 @@ export default function Transferencias() {
       setDescripcion("");
       setIsModalOpen(false);
 
-      const resTransferencias = await fetch(`http://localhost:8000/api/finanzas/transferencias/`, {
+      const resTransferencias = await fetch("http://localhost:8000/api/finanzas/transferencias/", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -168,7 +171,11 @@ export default function Transferencias() {
         },
       });
       const dataTransferencias = await resTransferencias.json();
-      setTransferencias(dataTransferencias.reverse());
+      const transferenciasFiltradas = dataTransferencias.filter(
+        (transferencia: Transferencia) =>
+          transferencia.cuenta_origen === cuentaId || transferencia.cuenta_destino === cuentaId
+      );
+      setTransferencias(transferenciasFiltradas.reverse());
     } catch (err) {
       setError("Ocurrió un error al procesar la transferencia.");
     }
@@ -202,7 +209,7 @@ export default function Transferencias() {
         </p>
       </div>
 
-            <button
+      <button
         onClick={() => setIsModalOpen(true)}
         className="bg-blue-500 text-white px-4 py-2 rounded-md mb-4"
       >
@@ -221,6 +228,7 @@ export default function Transferencias() {
               <p><strong>Destinatario:</strong> {transferencia.cuenta_origen === cuentaId ? transferencia.username_receptor : usernameLogueado}</p>
 
               <p><strong>Monto:</strong> {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(transferencia.monto)}</p>
+
               <p><strong>Fecha:</strong> {formatFecha(transferencia.fecha)}</p>
               {transferencia.descripcion && <p><strong>Descripción:</strong> {transferencia.descripcion}</p>}
             </li>
@@ -229,63 +237,58 @@ export default function Transferencias() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Realizar Transferencia</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-lg">
+            <h3 className="text-xl font-bold mb-4">Nueva Transferencia</h3>
             <form onSubmit={handleTransferencia}>
               <div className="mb-4">
-                <label htmlFor="destinatario" className="block text-sm font-semibold text-gray-700">
-                  Destinatario (Username o Número de cuenta)
-                </label>
+                <label htmlFor="destinatario" className="block text-sm font-medium text-gray-700">Destinatario (Username o Número de Cuenta)</label>
                 <input
-                  type="text"
                   id="destinatario"
+                  type="text"
                   value={destinatario}
                   onChange={(e) => setDestinatario(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 />
               </div>
 
               <div className="mb-4">
-                <label htmlFor="monto" className="block text-sm font-semibold text-gray-700">
-                  Monto
-                </label>
+                <label htmlFor="monto" className="block text-sm font-medium text-gray-700">Monto</label>
                 <input
-                  type="number"
                   id="monto"
+                  type="number"
                   value={monto}
                   onChange={(e) => setMonto(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 />
               </div>
 
               <div className="mb-4">
-                <label htmlFor="descripcion" className="block text-sm font-semibold text-gray-700">
-                  Descripción (opcional)
-                </label>
-                <textarea
+                <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">Descripción (Opcional)</label>
+                <input
                   id="descripcion"
+                  type="text"
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                ></textarea>
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
               </div>
 
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md mr-2"
+                >
+                  Transferir
+                </button>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                  className="bg-gray-500 text-white px-4 py-2 rounded-md"
                 >
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                >
-                  Transferir
                 </button>
               </div>
             </form>
