@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Prestamo = {
   id: number;
@@ -111,7 +112,7 @@ export default function PanelEmpleados() {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
         Panel de Empleados -  {sucursal || "Cargando..."}
       </h1>
-
+      <Link href="/homebanking/empleados/findTarjeta">Buscar tarjetas de un usuario</Link>
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>}
       {successMessage && <div className="bg-green-100 text-green-700 p-4 rounded mb-4">{successMessage}</div>}
 

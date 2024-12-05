@@ -33,11 +33,21 @@ class CuentaViewSet(viewsets.ModelViewSet):
 
 class TarjetaViewSet(viewsets.ModelViewSet):
     serializer_class = TarjetaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         usuario = self.request.user
         return Tarjeta.objects.filter(cuenta__usuario=usuario)
+
+    @action(detail=False, methods=['get'])
+    def buscar_por_usuario(self, request):
+        usuario_id = request.query_params.get('usuario_id')
+        if not usuario_id:
+            return Response({"error": "Se requiere el parámetro 'usuario_id'."}, status=400)
+
+        tarjetas = Tarjeta.objects.filter(cuenta__usuario__id=usuario_id)
+        serializer = self.get_serializer(tarjetas, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         cuenta = serializer.validated_data['cuenta']
