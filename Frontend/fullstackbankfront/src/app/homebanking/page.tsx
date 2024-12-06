@@ -145,85 +145,118 @@ export default function HomeBanking() {
   const primeraTarjeta = tarjetas.length > 0 ? tarjetas[0] : null;
 
   return (
-    <section className="content-wrapper py-20 px-2">
-      <section className="w-full max-w-sm mx-auto">
-        {balances_totales ? (
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h3 className="text-gray-600 text-lg font-semibold">Saldo Total:</h3>
-            <p className="text-gray-800 font-bold text-xl">${balances_totales.pesos}</p>
-            <div className="flex justify-around mt-8">
-              {acciones.map((action, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <button className="w-16 h-16 bg-gray-100 text-gray-700 rounded-full shadow-md flex items-center justify-center">
-                    <FontAwesomeIcon icon={action.icon} className="text-2xl" />
-                  </button>
-                  <span className="text-sm mt-2">{action.label}</span>
+      <section className="content-wrapper py-20 px-4 bg-gray-100 min-h-screen">
+        <section className="w-full max-w-2xl mx-auto bg-white shadow-xl rounded-lg p-8">
+          {balances_totales ? (
+              <>
+                <h3 className="text-gray-600 text-lg font-semibold text-center mb-4">Saldo Total</h3>
+                <p className="text-gray-800 font-bold text-3xl text-center">${balances_totales.pesos}</p>
+                <div className="grid grid-cols-3 gap-6 mt-8">
+                  {acciones.map((action, index) => (
+                      <div
+                          key={index}
+                          className="flex flex-col items-center bg-gradient-to-br from-gray-200 to-gray-300 p-4 rounded-lg hover:shadow-lg transition-transform transform hover:cursor-pointer"
+                      >
+                        <button
+                            className="w-16 h-16 bg-gray-100 text-gray-700 rounded-full shadow-md flex items-center justify-center">
+                          <FontAwesomeIcon icon={action.icon} className="text-3xl"/>
+                        </button>
+                        <span className="text-sm font-semibold mt-2">{action.label}</span>
+                      </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            {primeraTarjeta ? (
-              <div className="mt-8 flex justify-center">
-                <Link href="/homebanking/tarjetas">
-                  <div
-                    className={`cursor-pointer bg-white p-4 rounded-lg shadow-lg w-80 h-20 text-left overflow-hidden ${
-                      primeraTarjeta.tipo_tarjeta === "credito"
-                        ? "bg-gradient-to-br from-gray-800 to-black"
-                        : "bg-gradient-to-br from-blue-900 to-blue-950"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start h-full">
-                      <div className="flex flex-col justify-start space-y-1">
-                        <span className="text-white text-sm font-semibold">{primeraTarjeta.tipo_tarjeta.toUpperCase()}</span>
-                        <span className="text-white text-xs">{primeraTarjeta.proveedor}</span>
-                      </div>
-                      <div className="flex items-end space-x-2">
-                        <p className="text-gray-200 text-xs">Ver info</p>
-                        <FontAwesomeIcon icon={faChevronRight} className="text-gray-200 text-xs" />
-                      </div>
+                {primeraTarjeta && (
+                    <div className="mt-10 flex justify-center">
+                      <Link href="/homebanking/tarjetas">
+                        <div
+                            className={`cursor-pointer bg-white p-6 rounded-lg shadow-lg w-96 h-28 flex justify-between items-center transform hover:scale-105 transition-transform ${
+                                primeraTarjeta.tipo_tarjeta === "credito"
+                                    ? "bg-gradient-to-br from-gray-800 to-black"
+                                    : "bg-gradient-to-br from-blue-900 to-blue-950"
+                            }`}
+                        >
+                          <div>
+                            <h4 className="text-white text-lg font-bold">
+                              {primeraTarjeta.tipo_tarjeta.toUpperCase()}
+                            </h4>
+                            <p className="text-white text-sm">{primeraTarjeta.proveedor}</p>
+                          </div>
+                          <FontAwesomeIcon
+                              icon={faChevronRight}
+                              className="text-white text-2xl"
+                          />
+                        </div>
+                      </Link>
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ) : (
-              <p className="text-center text-gray-600">No tienes tarjetas disponibles.</p>
-            )}
-          </div>
-        ) : (
-          <p className="text-center text-gray-600">No tienes cuentas disponibles.</p>
-        )}
-      </section>
+                )}
+              </>
+          ) : (
+              <p className="text-center text-gray-600">No tienes cuentas disponibles.</p>
+          )}
+        </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold text-center mb-8">Tus Últimas Transacciones</h2>
-        {transferencias.length > 0 ? (
-          <div className="flex justify-center w-full">
-            <div className="bg-white shadow-md rounded-lg w-full max-w-sm p-6">
-              {transferencias.map((transferencia, index) => (
-                <div key={index} className="border-b py-3">
-                  <p className="text-gray-600 text-sm">Fecha: {new Date(transferencia.fecha).toLocaleDateString()}</p>
-                  <p className="text-gray-800 font-semibold">Monto: ${transferencia.monto}</p>
+        <section className="mt-12">
+          <h2 className="text-xl font-semibold text-center mb-8 text-gray-800">
+            Tus Últimas Transacciones
+          </h2>
+          {transferencias.length > 0 ? (
+              <div className="w-full max-w-2xl mx-auto bg-white shadow-xl rounded-lg p-8">
+                {transferencias.map((transferencia, index) => (
+                    <div
+                        key={index}
+                        className="border-b border-gray-200 py-4 last:border-0"
+                    >
+                      <p className="text-gray-600 text-sm">
+                        Fecha: {new Date(transferencia.fecha).toLocaleDateString()}
+                      </p>
+                      <p className="text-gray-800 font-semibold">
+                        Monto: ${transferencia.monto}
+                      </p>
+                    </div>
+                ))}
+                <div className="flex justify-center mt-6">
+                  <Link href="/homebanking/transferencias">
+                    <button className="text-blue-500 font-semibold hover:text-blue-700 transition-colors">
+                      Ver Más
+                    </button>
+                  </Link>
                 </div>
-              ))}
-              <Link href="/homebanking/transferencias">
-                <button className="text-blue-500 font-semibold hover:text-blue-700">
-                  Ver Más
-                </button>
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <p className="text-center text-gray-600">No tienes transacciones recientes.</p>
-        )}
-      </section>
+              </div>
+          ) : (
+              <p className="text-center text-gray-600">
+                No tienes transacciones recientes.
+              </p>
+          )}
+        </section>
 
-      <section className="mt-12">
-        <Link href="/homebanking/prestamos">
-          <div className="bg-gradient-to-br from-gray-700 to-gray-400 text-white p-4 rounded-lg shadow-md text-center max-h-20 max-w-sm mx-auto">
-            <h2 className="text-md font-semibold">¡Pedí un préstamo!</h2>
-            <p className="mt-2 text-m">Hasta $1,200,000.</p>
-          </div>
-        </Link>
+        <section className="mt-8">
+          <Link href="/homebanking/prestamos">
+            <div
+                className="relative bg-black text-white p-6 m-2 rounded-lg shadow-md text-center max-w-4xl mx-auto hover:shadow-lg transform transition-transform hover: overflow-hidden"
+            >
+              <div
+                  className="absolute inset-0 bg-gradient-to-r from-black via-gray-600 to-white opacity-40 animate-bg-pulse blur-lg"
+              ></div>
+              <h2 className="relative z-10 text-xl font-bold tracking-wide leading-tight">
+                ¿Necesitás financiación? Estamos aquí para ayudarte
+              </h2>
+              <p className="relative z-10 mt-4 text-md leading-relaxed">
+                Solicita un préstamo de hasta{" "}
+                <span className="font-bold">$1,200,000</span> con tasas competitivas y plazos ajustados a tus
+                necesidades.
+              </p>
+              <div className="relative z-10 mt-6">
+                <button
+                    className="px-4 py-2 bg-white text-gray-900 font-semibold rounded shadow hover:bg-gray-200 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    aria-label="Conocer más sobre préstamos"
+                >
+                  Conocer Más
+                </button>
+              </div>
+            </div>
+          </Link>
+        </section>
+
       </section>
-    </section>
   );
 }

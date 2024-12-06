@@ -30,6 +30,7 @@ export default function Prestamos() {
   const [interes, setInteres] = useState<number>(10);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false); // Estado para botones de proceso
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -75,7 +76,7 @@ export default function Prestamos() {
         const dataCuentas = await resCuentas.json();
         setCuentas(dataCuentas);
         if (dataCuentas.length > 0) {
-          setCuentaSeleccionada(dataCuentas[0].id); //primera cuenta por defecto
+          setCuentaSeleccionada(dataCuentas[0].id); // Primera cuenta por defecto
         }
 
         const resPrestamos = await fetch("http://localhost:8000/api/finanzas/prestamos/", {
@@ -101,10 +102,10 @@ export default function Prestamos() {
             cuota_mensual: parseFloat(prestamo.cuota_mensual),
           }))
         );
-        setLoading(false);
       } catch (err: any) {
         console.error(err.message);
         setError(err.message || "Error al cargar los datos.");
+      } finally {
         setLoading(false);
       }
     };
@@ -114,11 +115,13 @@ export default function Prestamos() {
 
   const generarPrestamo = async () => {
     setError(null);
+    setIsProcessing(true); // Activar estado de procesamiento
 
     const token = localStorage.getItem("authToken");
 
     if (!token) {
       setError("No se encontró un token de autenticación. Por favor, inicie sesión.");
+      setIsProcessing(false);
       return;
     }
 
@@ -127,16 +130,19 @@ export default function Prestamos() {
 
     if (isNaN(montoNumber) || montoNumber <= 0) {
       setError("Por favor, ingresa un monto válido.");
+      setIsProcessing(false);
       return;
     }
 
     if (isNaN(mesesNumber) || mesesNumber <= 0 || mesesNumber > 60) {
       setError("Por favor, selecciona un plazo válido (entre 1 y 60 meses).");
+      setIsProcessing(false);
       return;
     }
 
     if (!cuentaSeleccionada) {
       setError("Por favor, selecciona una cuenta.");
+      setIsProcessing(false);
       return;
     }
 
@@ -181,18 +187,35 @@ export default function Prestamos() {
     } catch (err: any) {
       console.error(err.message);
       setError(err.message || "Error al generar el préstamo. Intente de nuevo.");
+    } finally {
+      setIsProcessing(false); // Desactivar estado de procesamiento
     }
   };
   return (
-      <div className="h-screen bg-gray-50 text-gray-800">
-        <div className="max-w-6xl mx-auto py-10 px-6">
-          <div className="bg-gray-800 bg-opacity-5 p-6 m-2 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">Tus Préstamos</h2>
-            <p className="text-sm text-gray-600">Gestiona y revisa tus préstamos activos</p>
+      <div className="max-w-4xl mx-auto bg-gray-50 shadow-lg rounded-lg p-8">
+        <div className="max-w-4xl mx-auto py-10 px-6">
+          <div
+              className="bg-gray-800 bg-opacity-10 p-6 m-2 rounded-2xl shadow-inner hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto ">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-3">Tus Préstamos</h2>
+            <p className="text-md text-gray-600">Gestiona y revisa tus préstamos activos</p>
           </div>
 
           {error && (
-              <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 flex items-center shadow">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-6 h-6 mr-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                  <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m2 0a9 9 0 11-6-8.485"
+                  />
+                </svg>
                 {error}
               </div>
           )}
@@ -203,14 +226,14 @@ export default function Prestamos() {
               </div>
           ) : (
               <>
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-white rounded-lg shadow-xl p-6 mb-8">
+                  <label className="block text-md font-medium text-gray-700 mb-3">
                     Selecciona una cuenta
                   </label>
                   <select
                       value={cuentaSeleccionada || ""}
                       onChange={(e) => setCuentaSeleccionada(Number(e.target.value))}
-                      className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                      className="w-full bg-gray-50 border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-gray-600 text-gray-700 shadow"
                   >
                     {cuentas.map((cuenta) => (
                         <option key={cuenta.id} value={cuenta.id}>
@@ -220,30 +243,30 @@ export default function Prestamos() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {prestamos.map((prestamo) => (
                       <div
                           key={prestamo.id}
-                          className="bg-gray-100 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                          className="bg-gray-100 rounded-xl shadow-md p-6 hover:shadow-xl hover:bg-white transition-transform transform duration-300 hover:scale-105"
                       >
-                        <p className="text-gray-700 font-medium mb-2">
+                        <p className="text-gray-800 font-semibold mb-3">
                           <strong>Monto:</strong> ${prestamo.monto_prestado.toFixed(2)}
                         </p>
-                        <p className="text-gray-700 font-medium mb-2">
+                        <p className="text-gray-700 mb-2">
                           <strong>Plazo:</strong> {prestamo.meses_duracion} meses
                         </p>
-                        <p className="text-gray-700 font-medium mb-2">
+                        <p className="text-gray-700 mb-2">
                           <strong>Tasa de interés:</strong> {prestamo.interes}%
                         </p>
-                        <p className="text-gray-700 font-medium mb-2">
+                        <p className="text-gray-700 mb-2">
                           <strong>Pago Total:</strong> ${prestamo.pago_total.toFixed(2)}
                         </p>
-                        <p className="text-gray-700 font-medium mb-2">
+                        <p className="text-gray-700 mb-2">
                           <strong>Cuota Mensual:</strong> ${prestamo.cuota_mensual.toFixed(2)}
                         </p>
                         <p
                             className={`font-bold ${
-                                prestamo.estado === "activo" ? "text-green-500" : "text-gray-500"
+                                prestamo.estado === "activo" ? "text-green-600" : "text-gray-500"
                             }`}
                         >
                           <strong>Estado:</strong> {prestamo.estado}
@@ -254,10 +277,10 @@ export default function Prestamos() {
               </>
           )}
 
-          <div className="flex justify-center mt-10">
+          <div className="flex justify-center mt-12">
             <button
                 onClick={() => setMostrarModal(true)}
-                className="px-6 py-3 bg-black text-white font-semibold rounded-lg shadow-md transition-all duration-300 hover:bg-white hover:text-black focus:outline-none focus:ring-4 focus:ring-gray-500"
+                className="px-8 py-3 bg-black text-white font-semibold rounded-xl shadow-lg hover:bg-white hover:text-black border-2 border-black transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-600"
             >
               Generar Préstamo
             </button>
@@ -265,14 +288,12 @@ export default function Prestamos() {
 
           {mostrarModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-gray-100 p-8 rounded-lg shadow-lg w-full max-w-lg">
-                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
-                    Generar Préstamo
-                  </h3>
+                <div className="bg-gray-100 p-8 rounded-xl shadow-2xl w-full max-w-lg">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">Generar Préstamo</h3>
                   {error && <p className="text-red-500 mb-4">{error}</p>}
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mb-5">
+                    <label className="block text-md font-medium text-gray-700 mb-3">
                       Monto del préstamo ($)
                     </label>
                     <input
@@ -281,18 +302,18 @@ export default function Prestamos() {
                         min="0"
                         value={monto}
                         onChange={(e) => setMonto(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-gray-600 text-gray-700 shadow"
                     />
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mb-5">
+                    <label className="block text-md font-medium text-gray-700 mb-3">
                       Plazo (en meses)
                     </label>
                     <select
                         value={meses}
                         onChange={(e) => setMeses(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-gray-600 text-gray-700 shadow"
                     >
                       <option value="6">6 meses</option>
                       <option value="12">12 meses</option>
@@ -301,8 +322,8 @@ export default function Prestamos() {
                     </select>
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mb-6">
+                    <label className="block text-md font-medium text-gray-700 mb-3">
                       Tasa de interés anual (%)
                     </label>
                     <input
@@ -311,20 +332,20 @@ export default function Prestamos() {
                         min="0"
                         value={interes}
                         onChange={(e) => setInteres(parseFloat(e.target.value))}
-                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-gray-600 text-gray-700 shadow"
                     />
                   </div>
 
                   <div className="flex justify-end">
                     <button
                         onClick={() => setMostrarModal(false)}
-                        className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 mr-2 transition-colors"
+                        className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 mr-2 transition-colors"
                     >
                       Cancelar
                     </button>
                     <button
                         onClick={generarPrestamo}
-                        className="px-4 py-2 bg-black text-white rounded-lg transition-all duration-300 hover:bg-white hover:text-black"
+                        className="px-6 py-2 bg-black text-white rounded-lg transition-all duration-300 hover:bg-white hover:text-black border-2 border-black"
                     >
                       Crear
                     </button>

@@ -5,12 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons"; // Importar el ícono
+import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [user, setUser] = useState<{ username: string; email: string; direccion: string } | null>(null);
-  const [isEmpleado, setIsEmpleado] = useState(false); // Estado para empleados
+  const [isEmpleado, setIsEmpleado] = useState(false);
   const pathname = usePathname();
 
   const fetchUser = async () => {
@@ -71,6 +71,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-black text-gray-200 px-4 py-3 shadow-md border-b border-gray-700">
       <div className="w-full flex items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center">
           <div className="hidden lg:flex items-center space-x-6">
             <Link href="/homebanking">
@@ -84,57 +85,25 @@ const Navbar: React.FC = () => {
               <Link href="/homebanking">Rest</Link>
             </h1>
           </div>
-          <div className="lg:hidden relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="text-xl hover:text-white"
-            >
-              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-8 h-8 text-gray-400" />
-            </button>
-            <div
-              className={`absolute ${isDropdownOpen ? "block" : "hidden"} top-full mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50`}
-            >
-              {user ? (
-                <>
-                  <div className="px-4 py-2 text-sm">
-                    <p>{user.username}</p>
-                    <p className="text-gray-400">{user.email}</p>
-                    <p className="text-gray-400 mt-2">{user.direccion}</p>
-                  </div>
-
-                  {/* El ícono ahora está solo en el enlace "Cambiar dirección" */}
-                  <Link
-                    href="/homebanking/direcciones"
-                    className="flex items-center px-4 py-2 text-sm text-blue-500 hover:bg-gray-700"
-                  >
-                    Cambiar dirección <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="mr-2" /> 
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <p className="px-4 py-2 text-sm text-gray-500">Cargando...</p>
-              )}
-            </div>
-          </div>
         </div>
-
         <ul className="hidden lg:flex space-x-6 text-sm items-center">
           {navItems.map((item) => (
-            <li key={item.href}>
+            <li key={item.href} className="relative group">
               <Link
                 href={item.href}
-                className={`${
-                  pathname === item.href ? "text-white" : "hover:text-white"
-                } transition-all duration-300`}
+                className={`px-3 py-2 transition-all ${
+                  pathname === item.href
+                    ? "text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
               >
                 {item.label}
               </Link>
+              <span
+                className={`absolute bottom-0 left-0 w-full h-[2px] bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left ${
+                  pathname === item.href ? "scale-x-100" : "scale-x-0"
+                }`}
+              ></span>
             </li>
           ))}
           <li className="relative">
@@ -145,7 +114,9 @@ const Navbar: React.FC = () => {
               <span>{user?.username || "Usuario"}</span>
             </button>
             <div
-              className={`absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg ${isDropdownOpen ? "block" : "hidden"}`}
+              className={`absolute right-0 mt-2 w-48 bg-gray-950 text-white rounded-lg shadow-lg ${
+                isDropdownOpen ? "block" : "hidden"
+              }`}
             >
               {user ? (
                 <>
@@ -154,15 +125,12 @@ const Navbar: React.FC = () => {
                     <p className="text-gray-400">{user.email}</p>
                     <p className="text-gray-400 mt-2">{user.direccion}</p>
                   </div>
-
-                  {/* Ícono solo en el enlace "Cambiar dirección" */}
                   <Link
                     href="/homebanking/direcciones"
                     className="flex items-center px-4 py-2 text-sm text-blue-500 hover:bg-gray-700"
                   >
-                    Cambiar dirección <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="mr-2" /> 
+                    Cambiar dirección <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="ml-2" />
                   </Link>
-
                   <button
                     onClick={handleLogout}
                     className="w-full px-4 py-2 text-sm rounded-lg hover:bg-gray-700"

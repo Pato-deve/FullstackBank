@@ -101,3 +101,28 @@
   }
 }
 
+.animate-bg-movement{
+  background-size: 300% 300%;
+  animation: bgMovement 5s infinite ease-in-out;
+}
+
+@keyframes bgPulse {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-bg-pulse {
+  background-size: 200% 200%;
+  animation: bgPulse 6s infinite ease-in-out;
+}
+
+.blur-lg {
+  filter: blur(20px);
+}
