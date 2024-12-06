@@ -30,7 +30,7 @@ export default function Prestamos() {
   const [interes, setInteres] = useState<number>(10);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false); // Estado para botones de proceso
+  const [isProcessing, setIsProcessing] = useState<boolean>(false); // estado botones de proceso
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -76,7 +76,7 @@ export default function Prestamos() {
         const dataCuentas = await resCuentas.json();
         setCuentas(dataCuentas);
         if (dataCuentas.length > 0) {
-          setCuentaSeleccionada(dataCuentas[0].id); // Primera cuenta por defecto
+          setCuentaSeleccionada(dataCuentas[0].id); // primera cuenta por defecto
         }
 
         const resPrestamos = await fetch("http://localhost:8000/api/finanzas/prestamos/", {
@@ -115,7 +115,7 @@ export default function Prestamos() {
 
   const generarPrestamo = async () => {
     setError(null);
-    setIsProcessing(true); // Activar estado de procesamiento
+    setIsProcessing(true);
 
     const token = localStorage.getItem("authToken");
 
@@ -188,15 +188,15 @@ export default function Prestamos() {
       console.error(err.message);
       setError(err.message || "Error al generar el préstamo. Intente de nuevo.");
     } finally {
-      setIsProcessing(false); // Desactivar estado de procesamiento
+      setIsProcessing(false);
     }
   };
   return (
       <div className="max-w-4xl mx-auto bg-gray-50 shadow-lg rounded-lg p-8">
-        <div className="max-w-4xl mx-auto py-10 px-6">
+        <div className="max-w-4xl mx-auto px-6">
           <div
-              className="bg-gray-800 bg-opacity-10 p-6 m-2 rounded-2xl shadow-inner hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto ">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-3">Tus Préstamos</h2>
+              className="bg-gray-800 bg-opacity-5 p-6 m-2 rounded-2xl shadow-inner hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto ">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Tus Préstamos</h2>
             <p className="text-md text-gray-600">Gestiona y revisa tus préstamos activos</p>
           </div>
 
