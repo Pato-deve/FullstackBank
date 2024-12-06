@@ -184,135 +184,158 @@ export default function Prestamos() {
     }
   };
   return (
-  <div className="h-screen bg-gray-50 text-gray-800">
-    <div className="max-w-6xl mx-auto py-10 px-6">
-      <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center">Tus Préstamos</h2>
-
-      {error && <p className="text-red-500 text-center mb-6">{error}</p>}
-
-      {loading ? (
-        <div className="flex justify-center items-center">
-          <div className="w-16 h-16 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        <>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Selecciona una cuenta</label>
-            <select
-              value={cuentaSeleccionada || ""}
-              onChange={(e) => setCuentaSeleccionada(Number(e.target.value))}
-              className="w-full border border-gray-300 px-3 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              {cuentas.map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>
-                  {cuenta.tipo_cuenta} - {cuenta.numero_cuenta}
-                </option>
-              ))}
-            </select>
+      <div className="h-screen bg-gray-50 text-gray-800">
+        <div className="max-w-6xl mx-auto py-10 px-6">
+          <div className="bg-gray-800 bg-opacity-5 p-6 m-2 rounded-xl shadow-inner shadow hover:shadow-lg text-center text-gray-800 max-w-lg mx-auto">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-2">Tus Préstamos</h2>
+            <p className="text-sm text-gray-600">Gestiona y revisa tus préstamos activos</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {prestamos.map((prestamo) => (
-              <div
-                key={prestamo.id}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-              >
-                <p className="text-gray-700 font-medium mb-2">
-                  <strong>Monto:</strong> ${prestamo.monto_prestado.toFixed(2)}
-                </p>
-                <p className="text-gray-700 font-medium mb-2">
-                  <strong>Plazo:</strong> {prestamo.meses_duracion} meses
-                </p>
-                <p className="text-gray-700 font-medium mb-2">
-                  <strong>Tasa de interés:</strong> {prestamo.interes}%
-                </p>
-                <p className="text-gray-700 font-medium mb-2">
-                  <strong>Pago Total:</strong> ${prestamo.pago_total.toFixed(2)}
-                </p>
-                <p className="text-gray-700 font-medium mb-2">
-                  <strong>Cuota Mensual:</strong> ${prestamo.cuota_mensual.toFixed(2)}
-                </p>
-                <p className={`font-bold ${prestamo.estado === "activo" ? "text-green-600" : "text-gray-500"}`}>
-                  <strong>Estado:</strong> {prestamo.estado}
-                </p>
+          {error && (
+              <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+                {error}
               </div>
-            ))}
-          </div>
-        </>
-      )}
+          )}
 
-      <div className="flex justify-center mt-10">
-        <button
-          onClick={() => setMostrarModal(true)}
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-        >
-          Generar Préstamo
-        </button>
+          {loading ? (
+              <div className="flex justify-center items-center">
+                <div className="w-16 h-16 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
+              </div>
+          ) : (
+              <>
+                <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona una cuenta
+                  </label>
+                  <select
+                      value={cuentaSeleccionada || ""}
+                      onChange={(e) => setCuentaSeleccionada(Number(e.target.value))}
+                      className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                  >
+                    {cuentas.map((cuenta) => (
+                        <option key={cuenta.id} value={cuenta.id}>
+                          {cuenta.tipo_cuenta} - {cuenta.numero_cuenta}
+                        </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {prestamos.map((prestamo) => (
+                      <div
+                          key={prestamo.id}
+                          className="bg-gray-100 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                      >
+                        <p className="text-gray-700 font-medium mb-2">
+                          <strong>Monto:</strong> ${prestamo.monto_prestado.toFixed(2)}
+                        </p>
+                        <p className="text-gray-700 font-medium mb-2">
+                          <strong>Plazo:</strong> {prestamo.meses_duracion} meses
+                        </p>
+                        <p className="text-gray-700 font-medium mb-2">
+                          <strong>Tasa de interés:</strong> {prestamo.interes}%
+                        </p>
+                        <p className="text-gray-700 font-medium mb-2">
+                          <strong>Pago Total:</strong> ${prestamo.pago_total.toFixed(2)}
+                        </p>
+                        <p className="text-gray-700 font-medium mb-2">
+                          <strong>Cuota Mensual:</strong> ${prestamo.cuota_mensual.toFixed(2)}
+                        </p>
+                        <p
+                            className={`font-bold ${
+                                prestamo.estado === "activo" ? "text-green-500" : "text-gray-500"
+                            }`}
+                        >
+                          <strong>Estado:</strong> {prestamo.estado}
+                        </p>
+                      </div>
+                  ))}
+                </div>
+              </>
+          )}
+
+          <div className="flex justify-center mt-10">
+            <button
+                onClick={() => setMostrarModal(true)}
+                className="px-6 py-3 bg-black text-white font-semibold rounded-lg shadow-md transition-all duration-300 hover:bg-white hover:text-black focus:outline-none focus:ring-4 focus:ring-gray-500"
+            >
+              Generar Préstamo
+            </button>
+          </div>
+
+          {mostrarModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-gray-100 p-8 rounded-lg shadow-lg w-full max-w-lg">
+                  <h3 className="text-2xl font-bold mb-4 text-gray-900">
+                    Generar Préstamo
+                  </h3>
+                  {error && <p className="text-red-500 mb-4">{error}</p>}
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Monto del préstamo ($)
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={monto}
+                        onChange={(e) => setMonto(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Plazo (en meses)
+                    </label>
+                    <select
+                        value={meses}
+                        onChange={(e) => setMeses(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                    >
+                      <option value="6">6 meses</option>
+                      <option value="12">12 meses</option>
+                      <option value="24">24 meses</option>
+                      <option value="36">36 meses</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tasa de interés anual (%)
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={interes}
+                        onChange={(e) => setInteres(parseFloat(e.target.value))}
+                        className="w-full bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                        onClick={() => setMostrarModal(false)}
+                        className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 mr-2 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                        onClick={generarPrestamo}
+                        className="px-4 py-2 bg-black text-white rounded-lg transition-all duration-300 hover:bg-white hover:text-black"
+                    >
+                      Crear
+                    </button>
+                  </div>
+                </div>
+              </div>
+          )}
+        </div>
       </div>
 
-      {mostrarModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
-            <h3 className="text-xl font-bold mb-4 text-gray-900">Generar Préstamo</h3>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Monto del préstamo ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plazo (en meses)</label>
-              <select
-                value={meses}
-                onChange={(e) => setMeses(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="6">6 meses</option>
-                <option value="12">12 meses</option>
-                <option value="24">24 meses</option>
-                <option value="36">36 meses</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tasa de interés anual (%)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={interes}
-                onChange={(e) => setInteres(parseFloat(e.target.value))}
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => setMostrarModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 mr-2"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={generarPrestamo}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Crear
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-);
+  );
 
 }
